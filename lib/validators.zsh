@@ -1,4 +1,4 @@
-function __mux-build-validator() {
+function .build-standard-parser() {
     private -a arg_val_allowed_scopes
     private -a arg_val_scope
     private -a arg_val_location
@@ -47,7 +47,7 @@ function __mux-build-validator() {
         '
         opt_specs+=' {s,t,p,b}=arg_scope -scope:=arg_scope'
         validators+='
-            __mux-validate-scope "$arg_scope[-1]" || return 1
+            .parse-scope "$arg_scope[-1]" || return 1
         '
     fi
 
@@ -57,7 +57,7 @@ function __mux-build-validator() {
         '
         opt_specs+=' {l,-location}:=arg_location'
         validators+='
-            __mux-validate-location "$arg_location[-1]" || return 1
+            .parse-location "$arg_location[-1]" || return 1
         '
     fi
 
@@ -116,7 +116,7 @@ function __mux-build-validator() {
     private arg_name
     for arg_name in $positional_arg_names; do
         validators+="
-            __mux-validate-$arg_name \"\$$index\" || return 1
+            .parse-$arg_name \"\$$index\" || return 1
         "
         ((index ++))
     done
@@ -131,7 +131,7 @@ function __mux-build-validator() {
     "
 }
 
-function __mux-validate-scope() {
+function .parse-scope() {
     if [[ -z "$1" ]]; then
         return
     fi
@@ -156,7 +156,7 @@ function __mux-validate-scope() {
     fi
 }
 
-function __mux-validate-location() {
+function .parse-location() {
     if [[ -z "$1" ]]; then
         return
     fi
@@ -201,12 +201,12 @@ function __mux-validate-location() {
     MuxArgs[location-id]="${location:2}"
 }
 
-function __mux-validate-value() {
+function .parse-value() {
     # Nothing is forbidden
     MuxArgs[value]="$1"
 }
 
-function __mux-check-alphanumeric() {
+function .check-alphanumeric() {
     if [[ "$1" =~ [^a-zA-Z0-9] ]]; then
         return 1
     fi

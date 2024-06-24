@@ -5,17 +5,18 @@ function this-mux() {
     local -A MuxArgs
     local -A MuxValues
     local -A MuxFifos
+    local -a mux_argv
     local -a mux_varnames
     local -a mux_regnames
 
     MuxArgs[cmd]="$1"
-    if [[ ! -v functions[__mux-cmd-$1] ]]; then
+    if [[ ! -v functions[@$1] ]]; then
         echo "Unknown mux command $1" >&2
         return 1
     fi
 
     shift
-    "__mux-cmd-${MuxArgs[cmd]}" "$@"
+    "@${MuxArgs[cmd]}" "$@"
 }
 
 () {
@@ -56,9 +57,14 @@ function this-mux() {
 
     private cmd
     for cmd in $mux_cmds; do
-        functions[__mux-cmd-${cmd}]="
-            $functions[mux-validate-${cmd}]
-            $functions[mux-exec-${cmd}]
+        "@$cmd"
+        functions[@$cmd.parse-args]="$(build-args-parser)"
+        functions[@$cmd.impl]="$functions[impl]"
+        functions[@$cmd]="
+            \"@$cmd.parse-args\" \"\$@\" &&
+            \"@$cmd.impl\"
         "
+
+        unfunction build-args-parser impl
     done
 }

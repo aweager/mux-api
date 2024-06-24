@@ -49,6 +49,7 @@ zmodload zsh/param/private
             "vars.zsh" \
             "info.zsh" \
             "registers.zsh" \
+            "system.zsh" \
             "tree.zsh" \
             "$file_to_source" \
             "main.zsh"

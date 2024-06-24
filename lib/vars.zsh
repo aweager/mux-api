@@ -1,65 +1,82 @@
-() {
-    functions[mux-validate-set-var]="$(
-        __mux-build-validator \
+function @set-var() {
+    function build-args-parser() {
+        .build-standard-parser \
             --scope \
             --location \
             varname value
-    )"
+    }
 
-    function mux-exec-set-var() {
+    function impl() {
         private varname="$MuxArgs[varname]"
 
         MuxValues[$varname]="$MuxArgs[value]"
         {
-            __mux-write-values
+            .write-values
 
             MuxArgs[namespace]="user"
             mux-impl-update-vars
         } always {
-            __mux-cleanup-fifos
+            .cleanup-fifos
         }
     }
+}
 
-    local varname_only="$(
-        __mux-build-validator \
+function @get-var() {
+    function build-args-parser() {
+        .build-standard-parser \
             --scope \
             --location \
             varname
-    )"
+    }
 
-    functions[mux-validate-get-var]="$varname_only"
-    function mux-exec-get-var() {
+    function impl() {
         private varname="$MuxArgs[varname]"
 
         {
-            __mux-make-fifos "$varname"
+            .make-fifos "$varname"
 
             MuxArgs[namespace]="user"
             mux-impl-get-vars &!
 
             (< "$MuxFifos[$varname]")
         } always {
-            __mux-cleanup-fifos
+            .cleanup-fifos
         }
     }
+}
 
-    functions[mux-validate-show-var]="$varname_only"
-    function mux-exec-show-var() {
-        echo "$(mux-exec-get-var "$@")"
+function @show-var() {
+    function build-args-parser() {
+        .build-standard-parser \
+            --scope \
+            --location \
+            varname
     }
 
-    functions[mux-validate-delete-var]="$varname_only"
-    function mux-exec-delete-var() {
+    function impl() {
+        echo "$(@get-var.impl)"
+    }
+}
+
+function @delete-var() {
+    function build-args-parser() {
+        .build-standard-parser \
+            --scope \
+            --location \
+            varname
+    }
+
+    function impl() {
         local mux_varnames=("$varname")
         MuxArgs[namespace]="user"
         mux-impl-delete-vars
     }
+}
 
-    function __mux-validate-varname() {
-        MuxArgs[varname]="$1"
-        if ! __mux-check-alphanumeric "$1"; then
-            echo "Variable name must be alphanumeric but was: '$1'" >&2
-            return 1
-        fi
-    }
+function .parse-varname() {
+    MuxArgs[varname]="$1"
+    if ! .check-alphanumeric "$1"; then
+        echo "Variable name must be alphanumeric but was: '$1'" >&2
+        return 1
+    fi
 }

@@ -1,4 +1,4 @@
-function __mux-make-fifos() {
+function .make-fifos() {
     private key fifo
     for key in "$@"; do
         fifo="$(mktemp -u)"
@@ -7,8 +7,8 @@ function __mux-make-fifos() {
     done
 }
 
-function __mux-write-values() {
-    __mux-make-fifos "${(@k)MuxValues}"
+function .write-values() {
+    .make-fifos "${(@k)MuxValues}"
 
     private key
     for key in "${(@k)MuxValues}"; do
@@ -16,11 +16,13 @@ function __mux-write-values() {
     done
 }
 
-function __mux-cleanup-fifos() {
-    rm "${(@v)MuxFifos}"
+function .cleanup-fifos() {
+    if [[ -n "${(@v)MuxFifos}" ]]; then
+        rm "${(@v)MuxFifos}"
+    fi
 }
 
-function __mux-validate-fifo() {
+function .parse-fifo() {
     if [[ ! -f "$1" ]]; then
         echo "Fifo '$1' is not a file" >&2
         return 1
