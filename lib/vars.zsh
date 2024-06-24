@@ -9,10 +9,7 @@
     function mux-exec-set-var() {
         private varname="$MuxArgs[varname]"
 
-        local -A MuxValues
         MuxValues[$varname]="$MuxArgs[value]"
-
-        local -A MuxFifos
         {
             __mux-write-values
 
@@ -34,7 +31,6 @@
     function mux-exec-get-var() {
         private varname="$MuxArgs[varname]"
 
-        local -A MuxFifos
         {
             __mux-make-fifos "$varname"
 
@@ -49,7 +45,7 @@
 
     functions[mux-validate-show-var]="$varname_only"
     function mux-exec-show-var() {
-        echo "$(mux-exec-get-var)"
+        echo "$(mux-exec-get-var "$@")"
     }
 
     functions[mux-validate-delete-var]="$varname_only"

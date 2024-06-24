@@ -1,25 +1,26 @@
 function __mux-build-validator() {
-    local -a arg_val_allowed_scopes
-    local -a arg_val_scope
-    local -a arg_val_location
-    local -a arg_val_spec
+    private -a arg_val_allowed_scopes
+    private -a arg_val_scope
+    private -a arg_val_location
+    private -a arg_val_varargs
+    private -a arg_val_spec
 
     zmodload zsh/zutil
     zparseopts -D -E -F -- \
         {s,t,p,b}+=arg_val_allowed_scopes \
         -scope=arg_val_scope \
         -location=arg_val_location \
+        -varargs=arg_val_varargs \
         -spec+:-=arg_val_spec ||
     return 1
 
-    local -a -U local_vars
-    local setup=''
-    local opt_specs=""
-    local validators=""
-    local positional_arg_names=("$@")
+    private setup=''
+    private opt_specs=""
+    private validators=""
+    private positional_arg_names=("$@")
 
-    local -a allowed_scopes
-    local entry
+    private -a allowed_scopes
+    private entry
     for entry in $arg_val_allowed_scopes; do
         case "$entry" in
             -s)
@@ -42,21 +43,21 @@ function __mux-build-validator() {
 
     if [[ ! -z $arg_val_scope ]]; then
         setup+='
-            local -a arg_scope
+            private -a arg_scope
         '
         opt_specs+=' {s,t,p,b}=arg_scope -scope:=arg_scope'
-        validators+="
-            __mux-validate-scope || return 1
-        "
+        validators+='
+            __mux-validate-scope "$arg_scope[-1]" || return 1
+        '
     fi
 
     if [[ ! -z $arg_val_location ]]; then
         setup+='
-            local -a arg_location
+            private -a arg_location
         '
         opt_specs+=' {l,-location}:=arg_location'
         validators+='
-            __mux-validate-location || return 1
+            __mux-validate-location "$arg_location[-1]" || return 1
         '
     fi
 
@@ -78,7 +79,7 @@ function __mux-build-validator() {
 
     if [[ -n $allowed_scopes ]]; then
         validators+="
-            local -a allowed_scopes
+            private -a allowed_scopes
             allowed_scopes=($allowed_scopes)
             if ! [[ -z \$MuxArgs[scope] || \$allowed_scopes[(Ie)\$MuxArgs[scope]] -gt 0 ]]; then
                 echo 'Only ($allowed_scopes) scopes are allowed' >&2
@@ -87,31 +88,32 @@ function __mux-build-validator() {
         "
     fi
 
-    local spec
+    private spec
     for spec in $arg_val_spec; do
         opt_specs+=" ${spec:6}"
     done
 
-    local num_args="${#positional_arg_names}"
-    if [[ $num_args -eq 0 ]]; then
-        validators+='
-            if [[ $# -ne 0 ]]; then
-                echo "$MuxArgs[cmd]: expected 0 arguments but received $#: ($*)" >&2
-                return 1
-            fi
-        '
-    else
-        validators+="
-            if [[ \$# -ne $num_args ]]; then
-                echo \"\$MuxArgs[cmd]: expected $num_args arguments ($positional_arg_names[*]) but received \$#: (\$*)\" >&2
-                return 1
-            fi
-        "
+    if [[ -z $arg_val_varargs ]]; then
+        private num_args="${#positional_arg_names}"
+        if [[ $num_args -eq 0 ]]; then
+            validators+='
+                if [[ $# -ne 0 ]]; then
+                    echo "$MuxArgs[cmd]: expected 0 arguments but received $#: ($*)" >&2
+                    return 1
+                fi
+            '
+        else
+            validators+="
+                if [[ \$# -ne $num_args ]]; then
+                    echo \"\$MuxArgs[cmd]: expected $num_args argument(s) ($positional_arg_names[*]) but received \$#: (\$*)\" >&2
+                    return 1
+                fi
+            "
+        fi
     fi
 
-    local positional_arg_name
-    local index=1
-    local arg_name
+    private index=1
+    private arg_name
     for arg_name in $positional_arg_names; do
         validators+="
             __mux-validate-$arg_name \"\$$index\" || return 1
@@ -130,12 +132,12 @@ function __mux-build-validator() {
 }
 
 function __mux-validate-scope() {
-    if [[ -z $arg_scope ]]; then
+    if [[ -z "$1" ]]; then
         return
     fi
 
-    local scope_key="$arg_scope[-1]"
-    local -A valid_scopes
+    private scope_key="$1"
+    private -A valid_scopes
     valid_scopes=(
         session session
         -s session
@@ -155,14 +157,14 @@ function __mux-validate-scope() {
 }
 
 function __mux-validate-location() {
-    if [[ -z "$arg_location" ]]; then
+    if [[ -z "$1" ]]; then
         return
     fi
 
-    local location="$arg_location[-1]"
+    private location="$1"
     MuxArgs[location]="$location"
-    local location_prefix="${location:0:2}"
-    local location_scope
+    private location_prefix="${location:0:2}"
+    private location_scope
 
     case "$location_prefix" in
         "s:")

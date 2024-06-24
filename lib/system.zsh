@@ -3,64 +3,53 @@
 
     functions[mux-validate-sync-registers-down]="$no_args"
     function mux-exec-sync-registers-down() {
-        private parent_mux_cmd="$(mux-impl-get-parent-mux)"
-        if [[ -z $parent_mux_cmd ]]; then
+        private parent_mux="$(mux-exec-get-parent-mux)"
+
+        if [[ -z $parent_mux ]]; then
             echo "No parent mux" >&2
             return 1
         fi
 
         private -a parent_regnames
-        parent_regnames=($(eval "$parent_mux_cmd list-registers"))
+        parent_regnames=($(eval "$parent_mux list-registers"))
 
-        private regname
-        for regname in $parent_regnames; do
-            private value="$(eval "$parent_mux_cmd get-register $regname")"
-            MuxArgs[regname]="$regname"
-            MuxArgs[value]="$value"
-            "mux-impl-set-register"
-        done
+        {
+            __mux-make-fifos "$parent_regnames[@]"
+            eval "$parent_mux dump-registers $MuxFifos[*]" &!
+            mux-impl-set-registers
 
-        unset "MuxArgs[value]"
-
-        private -a my_regnames
-        my_regnames=($(mux-impl-list-registers))
-
-        for regname in $my_regnames; do
-            if ! (($parent_regnames[(Ie)$regname])); then
-                MuxArgs[regname]="$regname"
-                mux-impl-delete-register
+            private child_mux="$(mux-exec-get-child-mux)"
+            if [[ -n $child_mux ]]; then
+                eval "$child_mux sync-registers-down"
             fi
-        done
+        } always {
+            __mux-cleanup-fifos
+        }
     }
 
     functions[mux-validate-sync-registers-up]="$no_args"
     function mux-exec-sync-registers-up() {
-        private child_mux_cmd="$(mux-impl-get-child-mux)"
-        if [[ -z $child_mux_cmd ]]; then
+        private child_mux="$(mux-exec-get-child-mux)"
+
+        if [[ -z $child_mux ]]; then
             echo "No child mux" >&2
             return 1
         fi
 
         private -a child_regnames
-        child_regnames=($(eval "$child_mux_cmd" list-registers))
+        child_regnames=($(eval "$child_mux list-registers"))
 
-        private regname
-        for regname in $child_regnames; do
-            MuxArgs[regname]="$regname"
-            MuxArgs[value]="$(eval "$child_mux_cmd get-register $regname")"
-            mux-impl-set-register
-        done
+        {
+            __mux-make-fifos "$child_regnames[@]"
+            eval "$child_mux dump-registers $MuxFifos[*]" &!
+            mux-impl-set-registers
 
-        unset "MuxArgs[value]"
-
-        private -a my_regnames
-        my_regnames=($(mux-impl-list-registers))
-
-        for regname in $my_regnames; do
-            if ! (($child_regnames[(Ie)$regname])); then
-                MuxArgs[regname]="$regname"
-                mux-impl-delete-register
+            private parent_mux="$(mux-exec-get-parent-mux)"
+            if [[ -n $parent_mux ]]; then
+                eval "$parent_mux sync-registers-up"
             fi
-        done
+        } always {
+            __mux-cleanup-fifos
+        }
     }
 }

@@ -1,7 +1,13 @@
 #!/bin/zsh
 
 function mux() {
+    # initialize variables that impls will read or write
     local -A MuxArgs
+    local -A MuxValues
+    local -A MuxFifos
+    local -a mux_varnames
+    local -a mux_regnames
+
     MuxArgs[cmd]="$1"
     if [[ ! -v functions[__mux-cmd-$1] ]]; then
         echo "Unknown mux command $1" >&2
@@ -9,7 +15,6 @@ function mux() {
     fi
 
     shift
-    local -A MuxValues
     "__mux-cmd-${MuxArgs[cmd]}" "$@"
 }
 
@@ -27,6 +32,7 @@ function mux() {
         show-register
         get-register
         list-registers
+        dump-registers
 
         register-child-mux
         unregister-child-mux

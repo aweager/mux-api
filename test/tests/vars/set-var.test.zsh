@@ -9,13 +9,9 @@ function tab-scoped.test() {
 
     function assert() {
         setopt err_return
-        assert-empty STDERR
+        assert-file-empty stderr stdout
 
-        assert-equal \
-            STDOUT \
-"updating vars
-"
-
+        source "$(get-param-dump mux-impl-update-vars)"
         assert-equal \
             "MuxArgs[cmd]" set-var \
             "MuxArgs[scope]" tab \
@@ -37,6 +33,7 @@ function old-vars-unset.test() {
     function assert() {
         setopt err_return
 
+        source "$(get-param-dump mux-impl-update-vars)"
         assert-unset \
             cmd_name \
             scope \

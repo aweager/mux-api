@@ -9,13 +9,9 @@ function unnamed.test() {
 
     function assert() {
         setopt err_return
-        assert-empty STDERR
+        assert-file-empty stderr stdout
 
-        assert-equal \
-            STDOUT \
-"updating registers
-"
-
+        source "$(get-param-dump mux-impl-update-registers)"
         assert-equal \
             "MuxArgs[cmd]" set-register \
             "MuxArgs[regname]" unnamed \

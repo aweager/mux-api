@@ -11,15 +11,14 @@ function icon-info.test() {
 
     function assert() {
         setopt err_return
-        assert-empty STDERR
+        assert-file-empty stderr
 
-        assert-equal \
-            STDOUT \
-"getting vars
+        cat <<- EOF | assert-file-equal stdout
 icon: Value for icon
 icon-color: Value for icon-color
-"
+EOF
 
+        source "$(get-param-dump mux-impl-get-vars)"
         assert-equal \
             "MuxArgs[cmd]" get-info \
             "MuxArgs[scope]" tab \
@@ -40,15 +39,14 @@ function title-info.test() {
 
     function assert() {
         setopt err_return
-        assert-empty STDERR
+        assert-file-empty stderr
 
-        assert-equal \
-            STDOUT \
-"getting vars
+        cat <<- EOF | assert-file-equal stdout
 title: Value for title
 title-style: Value for title-style
-"
+EOF
 
+        source "$(get-param-dump mux-impl-get-vars)"
         assert-equal \
             "MuxArgs[cmd]" get-info \
             "MuxArgs[scope]" tab \
@@ -67,17 +65,16 @@ function all-info.test() {
 
     function assert() {
         setopt err_return
-        assert-empty STDERR
+        assert-file-empty stderr
 
-        assert-equal \
-            STDOUT \
-"getting vars
+        cat <<- EOF | assert-file-equal stdout
 icon: Value for icon
 icon-color: Value for icon-color
 title: Value for title
 title-style: Value for title-style
-"
+EOF
 
+        source "$(get-param-dump mux-impl-get-vars)"
         assert-equal \
             "MuxArgs[cmd]" get-info \
             "MuxArgs[scope]" tab \

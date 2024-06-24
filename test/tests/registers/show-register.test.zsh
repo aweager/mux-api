@@ -9,14 +9,13 @@ function unnamed.test() {
 
     function assert() {
         setopt err_return
-        assert-empty STDERR
+        assert-file-empty stderr
 
-        assert-equal \
-            STDOUT \
-"getting registers
+        cat <<- EOF | assert-file-equal stdout
 Value for unnamed
-"
+EOF
 
+        source "$(get-param-dump mux-impl-get-registers)"
         assert-equal \
             "MuxArgs[cmd]" show-register \
             "MuxArgs[regname]" unnamed

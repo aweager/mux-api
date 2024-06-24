@@ -9,14 +9,13 @@ function tab-scoped.test() {
 
     function assert() {
         setopt err_return
-        assert-empty STDERR
+        assert-file-empty stderr
 
-        assert-equal \
-            STDOUT \
-"getting vars
+        cat <<- EOF | assert-file-equal stdout
 Value for name
-"
+EOF
 
+        source "$(get-param-dump mux-impl-get-vars)"
         assert-equal \
             "MuxArgs[cmd]" show-var \
             "MuxArgs[scope]" tab \

@@ -15,13 +15,11 @@
                 --spec -title-style:=arg_title_style
         )
 
-        local -A MuxValues
         __mux-validate-info-dict || return 1
     "
 
     functions[mux-validate-set-info]="$dict_validator"
     function mux-exec-set-info() {
-        local -A MuxFifos
         {
             __mux-write-values
 
@@ -37,7 +35,6 @@
 
     functions[mux-validate-update-info]="$dict_validator"
     function mux-exec-update-info() {
-        local -A MuxFifos
         {
             __mux-write-values
 
@@ -73,7 +70,6 @@
 
     functions[mux-validate-get-info]="$list_validator"
     function mux-exec-get-info() {
-        local -A MuxFifos
         {
             __mux-make-fifos "$mux_varnames[@]"
 
@@ -91,7 +87,6 @@
 
     functions[mux-validate-resolve-info]="$list_validator"
     function mux-exec-resolve-info() {
-        local -A MuxFifos
         {
             __mux-make-fifos "$mux_varnames[@]"
 
@@ -119,7 +114,6 @@
     for key in icon icon-color title title-style; do
         functions[mux-validate-get-$key]="$read_entry_validator"
         functions[mux-exec-get-$key]="
-            local -A MuxFifos
             {
                 __mux-make-fifos $key
 
@@ -136,7 +130,6 @@
 
         functions[mux-validate-resolve-$key]="$read_entry_validator"
         functions[mux-exec-resolve-$key]="
-            local -A MuxFifos
             {
                 __mux-make-fifos $key
 
@@ -152,14 +145,12 @@
         "
 
         functions[mux-validate-set-$key]="$(
-            local -A MuxValues
             __mux-build-validator \
                 --scope \
                 --location \
                 $key
         )"
         functions[mux-exec-set-$key]="
-            local -A MuxFifos
             {
                 __mux-write-values
                 mux-impl-update-vars

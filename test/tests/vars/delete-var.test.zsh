@@ -9,8 +9,9 @@ function tab-scoped.test() {
 
     function assert() {
         setopt err_return
-        assert-empty STDOUT STDERR
+        assert-file-empty stdout stderr
 
+        source "$(get-param-dump mux-impl-delete-vars)"
         assert-equal \
             "MuxArgs[cmd]" delete-var \
             "MuxArgs[scope]" tab \

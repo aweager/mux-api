@@ -190,6 +190,16 @@ like `echo -n`
 
 Lists the names of all currently stored registers, each on a new line.
 
+#### dump-registers
+
+`dump-registers <regname> <fifo> ...`
+
+Writes the values of all specified registers into FIFOs to be read by another
+process.
+
+The positional arguments define a map from `regname` -> `fifo`, repeated for as
+many registers as desired.
+
 ### Mux Tree
 
 Mux sessions exist in a tree structure -- the buffer of one mux might be
@@ -262,28 +272,6 @@ new line.
 #### resolve-<infoentry>
 
 `resolve-icon [scope/location] <scope>`
-
-### Tab Arrangement
-
-These commands must be implemented, even if they do nothing.
-
-#### pin-tab
-
-`pin-tab [location]`
-
-Pin the current tab. If it is already pinned, no-op.
-
-#### unpin-tab
-
-`unpin-tab [location]`
-
-Unpin the current tab. If it is already unpinned, no-op.
-
-#### toggle-pin-tab
-
-`toggle-pin-tab [location]`
-
-Toggle pinning the current tab.
 
 ### System Calls
 

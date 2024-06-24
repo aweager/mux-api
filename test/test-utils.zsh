@@ -1,5 +1,22 @@
 #### Reporting parameter values for inspection during assert stage
 
+function init-param-dump() {
+    if [[ -z $UNDER_TEST ]]; then
+        return
+    fi
+
+    export REPORTED_PARAMS_FILE="$(get-param-dump "$1")"
+
+    echo "
+        typeset -a reported_params
+    " > "$REPORTED_PARAMS_FILE"
+}
+
+function get-param-dump() {
+    mkdir -p "$REPORTED_PARAMS_DIR"
+    echo "$REPORTED_PARAMS_DIR/$1.params.zsh"
+}
+
 function report-parameter() {
     if [[ -z "$REPORTED_PARAMS_FILE" ]]; then
         return
@@ -127,5 +144,31 @@ function assert-equal() {
             error "Expected param $p to have value '$v' but had value: '${(P)p}'"
             return 2
         fi
+    done
+}
+
+function assert-file-equal() {
+    private -a arg_strip_newline
+    zparseopts -D -E -F -- \
+        {n,-strip-newline}=arg_strip_newline
+
+    private diff_result
+    if [[ -z $arg_strip_newline ]]; then
+        diff_result="$(diff "$1" /dev/stdin)" || true
+    else
+        diff_result="$(perl -p -e 'chomp if eof' | diff "$1" /dev/stdin)" || true
+    fi
+
+    if [[ -n "$diff_result" ]]; then
+        error "File $1 diff:"
+        echo "$diff_result" >&2
+        return 1
+    fi
+}
+
+function assert-file-empty() {
+    private filename
+    for filename; do
+        echo -n "" | assert-file-equal "$filename"
     done
 }

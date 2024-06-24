@@ -9,8 +9,9 @@ function unnamed.test() {
 
     function assert() {
         setopt err_return
-        assert-empty STDOUT STDERR
+        assert-file-empty stdout stderr
 
+        source "$(get-param-dump mux-impl-delete-registers)"
         assert-equal \
             "MuxArgs[cmd]" delete-register \
             "MuxArgs[regname]" unnamed

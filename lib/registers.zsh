@@ -5,10 +5,7 @@
     )"
 
     function mux-exec-set-register() {
-        local -A MuxValues
         MuxValues[$MuxArgs[regname]]="$MuxArgs[value]"
-
-        local -A MuxFifos
         {
             __mux-write-values
             mux-impl-update-registers
@@ -25,7 +22,6 @@
     functions[mux-validate-get-register]="$regname_only"
     function mux-exec-get-register() {
         private regname="$MuxArgs[regname]"
-        local -A MuxFifos
         {
             __mux-make-fifos "$regname"
             mux-impl-get-registers &!
@@ -50,7 +46,6 @@
     functions[mux-validate-load-register]="$regname_only"
     function mux-exec-load-register() {
         private regname="$MuxArgs[regname]"
-        local -A MuxFifos
         {
             __mux-make-fifos "$regname"
             cat > "$MuxFifos[$regname]" &!
@@ -60,18 +55,41 @@
         }
     }
 
-    functions[mux-validate-list-registers]="$(
-        __mux-build-validator
-    )"
-
+    functions[mux-validate-list-registers]="$(__mux-build-validator)"
     function mux-exec-list-registers() {
         local -a reply
+        reply=()
         mux-impl-list-registers
 
         private regname
         for regname in "$reply[@]"; do
             echo "$regname"
         done
+    }
+
+    functions[mux-validate-dump-registers]="
+        $(__mux-build-validator --varargs)
+        __mux-validate-register-dump-map \"\$@\" || return 1
+    "
+
+    function __mux-validate-register-dump-map() {
+        private regname fifo
+        for regname fifo in "$@"; do
+            __mux-validate-regname "$regname" || return 1
+
+            if [[ -v MuxFifos[$regname] ]]; then
+                echo "Register $regname already has a fifo" >&2
+                return 1
+            fi
+
+            __mux-validate-fifo "$fifo" || return 1
+            MuxFifos[$regname]="$fifo"
+        done
+    }
+
+    function mux-exec-dump-registers() {
+        unset "MuxArgs[regname]"
+        mux-impl-get-registers
     }
 
     function __mux-validate-regname() {

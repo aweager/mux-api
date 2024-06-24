@@ -11,13 +11,9 @@ function icon-info.test() {
 
     function assert() {
         setopt err_return
-        assert-empty STDERR
+        assert-file-empty stderr stdout
 
-        assert-equal \
-            STDOUT \
-"setting vars
-"
-
+        source "$(get-param-dump mux-impl-set-vars)"
         assert-equal \
             "FifoValues[icon]" X \
             "FifoValues[icon-color]" green
@@ -41,13 +37,9 @@ function title-info.test() {
 
     function assert() {
         setopt err_return
-        assert-empty STDERR
+        assert-file-empty stderr stdout
 
-        assert-equal \
-            STDOUT \
-"setting vars
-"
-
+        source "$(get-param-dump mux-impl-set-vars)"
         assert-equal \
             "FifoValues[title]" name \
             "FifoValues[title-style]" italic
@@ -73,13 +65,9 @@ function all-info.test() {
 
     function assert() {
         setopt err_return
-        assert-empty STDERR
+        assert-file-empty stderr stdout
 
-        assert-equal \
-            STDOUT \
-"setting vars
-"
-
+        source "$(get-param-dump mux-impl-set-vars)"
         assert-equal \
             "FifoValues[icon]" X \
             "FifoValues[icon-color]" green \

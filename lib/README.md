@@ -147,3 +147,15 @@ Output:
 ```
 reply # list of regnames
 ```
+
+### System
+
+#### mux-impl-get-mux-cmd
+
+No input.
+
+Output:
+
+```
+REPLY # the command
+```
