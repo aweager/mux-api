@@ -1,82 +1,105 @@
-function @set-var() {
-    function build-args-parser() {
-        .build-standard-parser \
-            --scope \
-            --location \
-            varname value
-    }
+### User variables ###
 
-    function impl() {
-        private varname="$MuxArgs[varname]"
+function mux-impl-var() {
+    local cmd="$1"
+    shift
 
-        MuxValues[$varname]="$MuxArgs[value]"
-        {
-            .write-values
-
-            MuxArgs[namespace]="user"
-            mux-impl-update-vars
-        } always {
-            .cleanup-fifos
-        }
-    }
+    case "$verb" in
+        get-var)
+            mux-get-var "$@"
+            ;;
+        resolve-var)
+            mux-resolve-var "$@"
+            ;;
+        set-var)
+            mux-set-var "$@"
+            ;;
+        delete-var)
+            mux-delete-var "$@"
+            ;;
+        has-var)
+            mux-has-var "$@"
+            ;;
+        list-vars)
+            mux-list-vars "$@"
+            ;;
+        *)
+            printf 'Unknown mux command %s\n' "$verb" >&2
+            return 1
+            ;;
+    esac
 }
 
-function @get-var() {
-    function build-args-parser() {
-        .build-standard-parser \
-            --scope \
-            --location \
-            varname
-    }
+function mux-get-var() {
+    local location="$1"
+    local varname="$2"
 
-    function impl() {
-        private varname="$MuxArgs[varname]"
+    setopt local_options no_err_return
 
-        {
-            .make-fifos "$varname"
+    local get_result="$(.get USER "$location" "$varname")"
+    local get_status="$?"
 
-            MuxArgs[namespace]="user"
-            mux-impl-get-vars &!
+    setopt err_return
 
-            (< "$MuxFifos[$varname]")
-        } always {
-            .cleanup-fifos
-        }
-    }
-}
+    if [[ $get_status -ne 0 ]]; then
+        printf 'Location %s does not exist\n' "$location" >&2
+        return $get_status
+    fi
 
-function @show-var() {
-    function build-args-parser() {
-        .build-standard-parser \
-            --scope \
-            --location \
-            varname
-    }
-
-    function impl() {
-        echo "$(@get-var.impl)"
-    }
-}
-
-function @delete-var() {
-    function build-args-parser() {
-        .build-standard-parser \
-            --scope \
-            --location \
-            varname
-    }
-
-    function impl() {
-        local mux_varnames=("$varname")
-        MuxArgs[namespace]="user"
-        mux-impl-delete-vars
-    }
-}
-
-function .parse-varname() {
-    MuxArgs[varname]="$1"
-    if ! .check-alphanumeric "$1"; then
-        echo "Variable name must be alphanumeric but was: '$1'" >&2
+    local null=$'\0'
+    get_result="${get_result%${null}}"
+    if [[ $#get_result == $#varname ]]; then
+        printf 'Variable %s does not exist at location %s\n' "$varname" "$location" >&2
         return 1
     fi
+
+    printf '%s' "${get_result#* }"
+}
+
+function mux-resolve-var() {
+    local location="$1"
+    local varname="$2"
+
+    setopt local_options no_err_return
+
+    local resolve_result="$(.resolve USER "$location" "$varname")"
+    local resolve_status="$?"
+
+    setopt err_return
+
+    if [[ $resolve_status -ne 0 ]]; then
+        printf 'Location %s does not exist\n' "$location" >&2
+        return $resolve_status
+    fi
+
+    local null=$'\0'
+    resolve_result="${resolve_result%${null}}"
+    if [[ $#resolve_result == $#varname ]]; then
+        printf ''
+    else
+        printf '%s' "${resolve_result#* }"
+    fi
+}
+
+function mux-set-var() {
+    local location="$1"
+    local varname="$2"
+
+    { printf '%s ' "$varname"; cat; printf '\0' } | .set USER "$location"
+}
+
+function mux-delete-var() {
+    local location="$1"
+    local varname="$2"
+
+    printf '%s\0' "$varname" | .set USER "$location"
+}
+
+function mux-has-var() {
+    .list USER "$1" | grep "^$2\$" > /dev/null
+    return $?
+}
+
+function mux-list-vars() {
+    .list USER "$1" | sort
 }

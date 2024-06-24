@@ -1,349 +1,139 @@
-#### Info commands ####
-#
-# Required mux impls:
-#   - export-vars
-#   - import-vars
-#   - replace-vars
-#   - resolve-vars
-#   - list-vars
-#   - delete-vars
+### Info variables ###
 
+typeset -ga all_info_keys=(icon icon_color title title_style)
 
-### Retrieving data ###
-mux_cmds+=(
-    show-info
-    resolve-info
-    list-info
-)
+function mux-impl-info() {
+    local cmd="$1"
+    shift
 
-function @show-info() {
-    function build-args-parser() {
-        .build-info-list-parser
-    }
-
-    function impl() {
-        {
-            .make-fifos "$mux_varnames[@]"
-
-            MuxArgs[namespace]="info"
-            mux-impl-get-vars &!
-
-            private key
-            for key in "$mux_varnames[@]"; do
-                echo "${key}: $(< "$MuxFifos[$key]")"
-            done
-        } always {
-            .cleanup-fifos
-        }
-    }
+    case "$cmd" in
+        get-info)
+            mux-get-info "$@"
+            ;;
+        resolve-info)
+            mux-resolve-info "$@"
+            ;;
+        set-info)
+            mux-set-info "$@"
+            ;;
+        merge-info)
+            mux-merge-info "$@"
+            ;;
+        delete-info)
+            mux-delete-info "$@"
+            ;;
+        has-info)
+            mux-has-info "$@"
+            ;;
+        list-info)
+            mux-list-info "$@"
+            ;;
+        *)
+            printf 'Unknown mux command %s\n' "$cmd" >&2
+            return 1
+            ;;
+    esac
 }
 
-function @resolve-info() {
-    function build-args-parser() {
-        .build-info-list-parser
-    }
+function mux-get-info() {
+    local location="$1"
+    shift
 
-    function impl() {
-        {
-            .make-fifos "$mux_varnames[@]"
+    setopt local_options no_err_return
 
-            MuxArgs[namespace]="info"
-            mux-impl-resolve-vars &!
+    local get_result="$(.get INFO "$location" "$@")"
+    local get_status="$?"
 
-            private key
-            for key in "$mux_varnames[@]"; do
-                echo "${key}: $(< "$MuxFifos[$key]")"
-            done
-        } always {
-            .cleanup-fifos
-        }
-    }
+    setopt err_return
+
+    if [[ $get_status -ne 0 ]]; then
+        printf 'Location %s does not exist\n' "$location" >&2
+        return $get_status
+    fi
+
+    local null=$'\0'
+    get_result="${get_result%${null}}"
+    printf '%s\n' "${(0)get_result}"
 }
 
-function @list-info() {
-    function build-args-parser() {
-        .build-standard-parser # no args
-    }
+function mux-resolve-info() {
+    local location="$1"
+    shift
 
-    function impl() {
-        local -a reply
-        reply=()
+    setopt local_options no_err_return
 
-        MuxArgs[namespace]="info"
-        mux-impl-list-vars
+    local resolve_result="$(.resolve INFO "$location" "$@")"
+    local resolve_status="$?"
 
-        print -rC1 "$reply[@]"
-    }
+    setopt err_return
+
+    if [[ $resolve_status -ne 0 ]]; then
+        printf 'Location %s does not exist\n' "$location" >&2
+        return $resolve_status
+    fi
+
+    local null=$'\0'
+    resolve_result="${resolve_result%${null}}"
+    printf '%s\n' "${(0)resolve_result}"
 }
 
-### Modifying data ###
-mux_cmds+=(
-    set-info
-    update-info
-    delete-info
-)
+function mux-set-info() {
+    setopt local_options err_return
 
-function @set-info() {
-    function build-args-parser() {
-        .build-info-dict-parser
-    }
+    local location="$1"
+    shift
 
-    function impl() {
-        {
-            .write-values
+    local -A InfoToSet
+    InfoToSet=("$@")
+    local -a keys_to_set=("${(@k)InfoToSet}")
+    local -a keys_to_delete=("${all_info_keys[@]:|keys_to_set}")
 
-            local -a mux_varnames
-            mux_varnames=(${(@k)MuxValues})
-
-            MuxArgs[namespace]="info"
-            mux-impl-set-vars
-        } always {
-            .cleanup-fifos
-        }
-    }
-}
-
-function @update-info() {
-    function build-args-parser() {
-        .build-info-dict-parser
-    }
-
-    function impl() {
-        {
-            .write-values
-
-            local -a mux_varnames
-            mux_varnames=(${(@k)MuxValues})
-
-            MuxArgs[namespace]="info"
-            mux-impl-update-vars
-        } always {
-            .cleanup-fifos
-        }
-    }
-}
-
-function @delete-info() {
-    function build-args-parser() {
-        .build-info-list-parser
-    }
-
-    function impl() {
-        MuxArgs[namespace]="info"
-        mux-impl-delete-vars
-    }
-}
-
-### Piping data to/from files ###
-
-# TODO
-
-### Per-key functions ###
-
-() {
-    private key
-    for key in icon icon-color title title-style; do
-        mux_cmds+=(
-            get-$key
-            resolve-$key
-            set-$key
-        )
-
-        functions[@get-$key]="
-            function build-args-parser() {
-                .build-standard-parser \
-                    --scope \
-                    --location
-            }
-
-            functions[impl]='
-                {
-                    .make-fifos $key
-
-                    local -a mux_varnames
-                    mux_varnames=($key)
-
-                    mux-impl-get-vars
-
-                    (< \$MuxFifos[$key])
-                } always {
-                    .cleanup-fifos
-                }
-            '
-        "
-
-        functions[@resolve-$key]="
-            function build-args-parser() {
-                .build-standard-parser \
-                    --scope \
-                    --location
-            }
-
-            functions[impl]='
-                {
-                    .make-fifos $key
-
-                    local -a mux_varnames
-                    mux_varnames=($key)
-
-                    mux-impl-resolve-vars
-
-                    (< \$MuxFifos[$key])
-                } always {
-                    .cleanup-fifos
-                }
-            '
-        "
-
-        functions[@set-$key]="
-            functions[build-args-parser]='
-                .build-standard-parser \\
-                    --scope \\
-                    --location \\
-                    $key
-            '
-
-            function impl() {
-                {
-                    .write-values
-                    mux-impl-update-vars
-                } always {
-                    .cleanup-fifos
-                }
-            }
-        "
+    local key
+    local -a records
+    for key in "$keys_to_set[@]"; do
+        records+=("${key} $InfoToSet[$key]")
     done
+    for key in "$keys_to_delete[@]"; do
+        records+=("${key}")
+    done
+
+    printf '%s\0' "${(pj:\0:)records}" | .set INFO "$location"
+    .publish-session-info
 }
 
-### Parsers ###
+function mux-merge-info() {
+    setopt local_options err_return
 
-function .parse-icon() {
-    MuxArgs[icon]="$1"
-    MuxValues[icon]="$1"
+    local location="$1"
+    shift
 
-    if [[ ${#1} -ne 1 ]]; then
-        echo "Icon must be exactly one character but was \"$1\"" >&2
-        return 1
-    fi
+    local -A InfoToSet
+    InfoToSet=("$@")
+    local -a keys_to_set=("${(@k)InfoToSet}")
+
+    local key
+    local -a records
+    for key in "$keys_to_set[@]"; do
+        records+=("${key} $InfoToSet[$key]")
+    done
+
+    printf '%s\0' "${(pj:\0:)records}" | .set INFO "$location"
+    .publish-session-info
 }
 
-function .parse-icon-color() {
-    MuxArgs[icon-color]="$1"
-    MuxValues[icon-color]="$1"
+function mux-delete-info() {
+    local location="$1"
+    shift
 
-    local -a color_names
-    color_names=(black red green yellow blue magenta cyan white)
-
-    if (($color_names[(Ie)$1])); then
-        return 0
-    elif [[ $1 =~ '^[0-9]+$' ]]; then
-        if [[ $1 -le 255 ]]; then
-            return 0
-        fi
-    elif [[ $1 =~ '^#([0-9]|[a-f]){6}$' ]]; then
-        return 0
-    fi
-
-    echo "Icon color must be one of the 8 ANSI colors, a number from 0-255, or a hex code #ffffff" >&2
-    return 1
+    printf '%s\0' "${(pj:\0:)argv}" | .set INFO "$location"
+    .publish-session-info
 }
 
-function .parse-title() {
-    MuxArgs[title]="$1"
-    MuxValues[title]="$1"
-    # TODO valid title chars?
+function mux-has-info() {
+    .list INFO "$1" | grep "^$2\$" > /dev/null
+    return $?
 }
 
-function .parse-title-style() {
-    MuxArgs[title-style]="$1"
-    MuxValues[title-style]="$1"
-
-    local -a allowed_title_styles
-    allowed_title_styles=(default italic)
-    if (($allowed_title_styles[(Ie)$1])); then
-        return 0
-    fi
-
-    echo "Title style must be one of ($allowed_title_styles[*]) but was: '$1'"
-    return 1
-}
-
-function .parse-info-dict() {
-    if [[ ${#arg_icon[@]} -gt 0 ]]; then
-        .parse-icon "$arg_icon[-1]" || return 1
-    fi
-
-    if [[ ${#arg_icon_color[@]} -gt 0 ]]; then
-        .parse-icon-color "$arg_icon_color[-1]" || return 1
-    fi
-
-    if [[ ${#arg_title[@]} -gt 0 ]]; then
-        .parse-title "$arg_title[-1]" || return 1
-    fi
-
-    if [[ ${#arg_title_style[@]} -gt 0 ]]; then
-        .parse-title-style "$arg_title_style[-1]" || return 1
-    fi
-}
-
-function .parse-info-keys() {
-    if [[ ${#arg_icon[@]} -gt 0 ]]; then
-        mux_varnames+=(icon)
-    fi
-
-    if [[ ${#arg_icon_color[@]} -gt 0 ]]; then
-        mux_varnames+=(icon-color)
-    fi
-
-    if [[ ${#arg_title[@]} -gt 0 ]]; then
-        mux_varnames+=(title)
-    fi
-
-    if [[ ${#arg_title_style[@]} -gt 0 ]]; then
-        mux_varnames+=(title-style)
-    fi
-
-    if [[ -z $mux_varnames ]]; then
-        mux_varnames=(icon icon-color title title-style)
-    fi
-}
-
-function .build-info-dict-parser() {
-    echo "
-        local -a arg_icon
-        local -a arg_icon_color
-        local -a arg_title
-        local -a arg_title_style
-    "
-
-    .build-standard-parser \
-        --scope \
-        --location \
-        --spec -icon:=arg_icon \
-        --spec -icon-color:=arg_icon_color \
-        --spec -title:=arg_title \
-        --spec -title-style:=arg_title_style
-
-    echo ".parse-info-dict || return 1"
-}
-
-function .build-info-list-parser() {
-    echo '
-        local -a arg_icon
-        local -a arg_icon_color
-        local -a arg_title
-        local -a arg_title_style
-    '
-
-    .build-standard-parser \
-        --scope \
-        --location \
-        --spec -icon=arg_icon \
-        --spec -icon-color=arg_icon_color \
-        --spec -title=arg_title \
-        --spec -title-style=arg_title_style
-
-    echo '
-        .parse-info-keys || return 1
-    '
+function mux-list-info() {
+    .list INFO "$1"
 }

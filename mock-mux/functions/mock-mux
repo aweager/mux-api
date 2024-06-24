@@ -1,9 +1,0 @@
-#!/bin/zsh
-
-() {
-    local script_dir="${1:a:h}"
-
-    source "$script_dir/../../lib/build-mux.zsh" mock-mux "$script_dir/../lib/configure.zsh"
-} "$(whence -p mock-mux)"
-
-mock-mux "$@"
