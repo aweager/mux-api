@@ -1,0 +1,35 @@
+#!/bin/zsh
+
+typeset -T MUX_STACK mux_stack ";"
+export MUX_STACK
+
+function mux() {
+    if [[ -z "$MUX_STACK" ]]; then
+        echo '$MUX_STACK is empty' >&2
+        return 1
+    fi
+
+    local -a arg_level
+    arg_level=(0) # defaults to top of stack
+
+    zmodload zsh/zutil
+    zparseopts -D -K -- \
+        {L,-level}:=arg_level ||
+    return 1
+
+    local mux_level="$arg_level[-1]"
+    if ! [[ $mux_level =~ ^-?[0-9]+$ ]]; then
+        echo "Level must be an integer" >&2
+        return 1
+    fi
+
+    if [[ $mux_level -ge 0 ]]; then
+        ((mux_level += 1))
+    fi
+
+    local mux_cmd="$mux_stack[$mux_level]"
+    eval "$mux_cmd" "\"${(j[" "])@}\""
+    return $?
+}
+
+mux "$@"
