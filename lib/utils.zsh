@@ -21,7 +21,6 @@ function __mux-cleanup-fifos() {
 }
 
 function __mux-validate-fifo() {
-    # TODO check if it's a named pipe?
     if [[ ! -f "$1" ]]; then
         echo "Fifo '$1' is not a file" >&2
         return 1
