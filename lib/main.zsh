@@ -35,11 +35,14 @@ function this-mux() {
         list-registers
         dump-registers
 
-        register-child-mux
-        unregister-child-mux
         get-child-mux
         get-parent-mux
         get-mux-cmd
+
+        link-child
+        link-parent
+        unlink-child
+        unlink-parent
 
         set-info
         update-info

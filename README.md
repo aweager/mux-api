@@ -250,26 +250,18 @@ Mux sessions exist in a tree structure -- the buffer of one mux might be
 running a mux session of a child. So each buffer can point to its child
 mux session, and each mux session can point to its parent mux session.
 
-#### register-child-mux
-
-`register-child-mux [location] <muxcmd>`
-
-Informs this mux session that the specified buffer is running a mux session.
-
-- `<muxcmd>`: a command which can be used to interact with child session
-  through this API
-
-#### unregister-child-mux
-
-`unregister-child-mux [location]`
-
-Informs this mux session that the specified buffer is not running a mux session.
-
 #### get-child-mux
 
 `get-child-mux [location]`
 
-Gets the command set with `register-child-mux`
+Gets the command that can be used to interact with the child mux session at the
+specified location.
+
+#### get-parent-mux
+
+`get-parent-mux` (no arguments)
+
+Gets the command that can be used to interact with the parent mux session.
 
 #### get-mux-cmd
 
@@ -281,30 +273,67 @@ Gets the command that can be used to interact with this mux session.
 
 These calls are used to coordinate interactions between muxes in a tree.
 
-#### redraw-status
+#### Linking Muxes
 
-`redraw-status` (no arguments)
+A link between parent and child is established by making two calls, one
+on the parent and one on the child:
 
-Instructs this mux to redraw / refresh any status indicators that depend on mux
-info or variables.
+```
+parent-mux link-child [location] <muxcmd>
+child-mux link-parent <muxcmd>
+```
 
-#### sync-registers-down
+A link is removed by making these two calls:
+
+```
+child-mux unlink-parent <muxcmd>
+parent-mux unlink-child [location]
+```
+
+The location must be a buffer.
+
+##### link-child
+
+`link-child [location] <muxcmd>`
+
+##### link-parent
+
+`link-parent <muxcmd>`
+
+##### unlink-child
+
+`unlink-child [location]`
+
+##### unlink-parent
+
+`unlink-parent` (no arguments)
+
+#### Syncing Data
+
+##### sync-registers-down
 
 `sync-registers-down` (no arguments)
 
 Sets the values of the registers in this mux session to the values stored by
 the parent mux.
 
-#### sync-registers-up
+##### sync-registers-up
 
 `sync-registers-up [location]`
 
 Sets the values of the registers in this mux session to the values stored by
 the child mux at the specified location.
 
-#### sync-child-info
+##### sync-child-info
 
 `sync-child-info [location]`
 
 Sets the info at the specified buffer location to the session-level info of the
 child mux it is running.
+
+#### redraw-status
+
+`redraw-status` (no arguments)
+
+Instructs this mux to redraw / refresh any status indicators that depend on mux
+info or variables.

@@ -1,4 +1,4 @@
-function @register-child-mux() {
+function @link-child() {
     function build-args-parser() {
         .build-standard-parser \
             -b \
@@ -20,7 +20,7 @@ function @register-child-mux() {
     }
 }
 
-function @unregister-child-mux() {
+function @unlink-child() {
     function build-args-parser() {
         .build-standard-parser \
             -b \
@@ -31,6 +31,40 @@ function @unregister-child-mux() {
         MuxArgs[scope]="buffer"
         MuxArgs[namespace]="system"
         mux_varnames=("child_mux")
+
+        mux-impl-delete-vars
+    }
+}
+
+function @link-parent() {
+    function build-args-parser() {
+        .build-standard-parser \
+            muxcmd
+    }
+
+    function impl() {
+        MuxArgs[scope]="session"
+        MuxArgs[namespace]="system"
+        MuxValues[parent_mux]="$MuxArgs[muxcmd]"
+
+        {
+            .write-values
+            mux-impl-update-vars
+        } always {
+            .cleanup-fifos
+        }
+    }
+}
+
+function @unlink-parent() {
+    function build-args-parser() {
+        .build-standard-parser
+    }
+
+    function impl() {
+        MuxArgs[scope]="session"
+        MuxArgs[namespace]="system"
+        mux_varnames=("parent_mux")
 
         mux-impl-delete-vars
     }
