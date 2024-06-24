@@ -3,19 +3,15 @@
 source "logger.zsh"
 zmodload zsh/param/private
 
+private in_fd out_fd
+exec {in_fd}<"$1"
+exec {out_fd}>"$2"
+
 log.info Executor initialized
 
 while true; do
-    local send
     () {
-        trap '
-            if [[ -n "$send" ]]; then
-                log.trace Completing with error
-                echo -n 1 > "$send"
-                unset send
-            fi
-            echo "done"
-        ' EXIT
+        setopt local_options local_traps
 
         private STDIO_ARGS
         read STDIO_ARGS
@@ -23,8 +19,14 @@ while true; do
         private stdin="$stdio_args[1]"
         private stdout="$stdio_args[2]"
         private stderr="$stdio_args[3]"
-        send="$stdio_args[4]"
+        private send="$stdio_args[4]"
         private client_pid="$stdio_args[5]"
+
+        trap "
+            log.trace Completing with error
+            echo -n 1 > '$send'
+            echo 'done'
+        " EXIT
 
         log.debug "Client $client_pid requested stdio:" \
                 "\n    in  < $stdin" \
@@ -37,7 +39,9 @@ while true; do
         private cmd=(${(z)CMD})
 
         () {
-            "$@"
+            emulate -L zsh
+            log.trace "Executing $*"
+            execute-command "$@"
         } < "$stdin" > "$stdout" 2> "$stderr" "$cmd[@]"
         private result=$?
 
@@ -45,4 +49,4 @@ while true; do
         echo -n $result > "$send"
         unset send
     }
-done
+done <&$in_fd >&$out_fd

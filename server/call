@@ -49,7 +49,6 @@ function call() {
         if [[ -t 0 && -z $backgrounded ]]; then
             # need to use $(tty) instead of $TTY because we need whatever is hooked
             # up to fd 0, not what this shell started with
-            # TODO: safety by putting socat in between?
             stdin="$(tty)"
         elif [[ -z $backgrounded ]]; then
             stdin="$(mktemp -u)"
@@ -65,7 +64,7 @@ function call() {
             receive=/dev/null
         else
             stdout="$(mktemp -u)"
-            socat -U FD:1 "PIPE:$stdout" 2> /dev/null &
+            socat -U FD:1 "PIPE:$stdout,ignoreeof" 2> /dev/null &
             pids+=("$!")
 
             # If stdout and stderr are the same, don't separate them here.
@@ -78,7 +77,7 @@ function call() {
                 stderr="$stdout"
             else
                 stderr="$(mktemp -u)"
-                socat -U FD:2 "PIPE:$stderr" 2> /dev/null &
+                socat -U FD:2 "PIPE:$stderr,ignoreeof" 2> /dev/null &
                 pids+=("$!")
             fi
 

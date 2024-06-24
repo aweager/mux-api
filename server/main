@@ -1,7 +1,12 @@
 #!/bin/zsh
 
+0="${ZERO:-${${0:#$ZSH_ARGZERO}:-${(%):-%N}}}"
+0="${${(M)0:#/*}:-$PWD/$0}"
+
+cd "${0:h}"
+
 #### Usage:
-#       ./main [-L | --listen <socket>] [--log-level <level>] [--log-file <file>]
+#       ./main [-L | --listen <socket>] [--log-level <level>] [--log-file <file>] <executor>
 
 zmodload zsh/net/socket
 zmodload zsh/param/private
@@ -32,7 +37,9 @@ if [[ -n $arg_log_file ]]; then
     typeset -g LOG="$arg_log_file[-1]"
 fi
 
-source "${0:a:h}/logger.zsh"
+source "logger.zsh"
+
+private EXECUTOR="$1"
 
 private -a pids
 private -a files
@@ -55,32 +62,57 @@ log "
 -- Starting instance $$ --
 "
 
-log.info "Setting up coprocess"
-local coproc_pid
+local coproc_pid coproc_in_fifo coproc_out_fifo coproc_in_fd coproc_out_fd
 function coproc.build() {
-    coproc "./executor.zsh"
+    log.info "Setting up coprocess"
+    coproc socat STDIO "EXEC:zsh -f,pty,sane"
     coproc_pid=$!
+
+    coproc_in_fifo="$(mktemp -u)"
+    coproc_out_fifo="$(mktemp -u)"
+    mkfifo -m 600 "$coproc_out_fifo" "$coproc_in_fifo"
+    printf '%s\n' "source '$EXECUTOR' '$coproc_in_fifo' '$coproc_out_fifo'" >&p
+    exec {coproc_in_fd}<>"$coproc_in_fifo" {coproc_out_fd}<>"$coproc_out_fifo"
 }
 
 function coproc.write() {
-    echo "$@" >&p
+    echo "$@" >&$coproc_in_fd
 }
 
 function coproc.wait() {
-    read -p
+    read -e <&$coproc_out_fd
 }
 
 function coproc.interrupt() {
-    # TODO any way to not restart whole coprocess, maintaining state?
-    kill -HUP $coproc_pid
-    coproc.build
+    echo -ne '\x03\x03' >&p
+    printf '%s\n' "source '$EXECUTOR' '$coproc_in_fifo' '$coproc_out_fifo'" >&p
 }
 
 function coproc.kill() {
     if [[ -n $coproc_pid ]]; then
         log.info "Terminating coprocess"
-        kill -HUP $coproc_pid
+        kill -HUP "$coproc_pid" &> /dev/null
         coproc_pid=""
+    fi
+
+    if [[ -n $coproc_in_fd ]]; then
+        exec {coproc_in_fd}>&-
+        coproc_in_fd=""
+    fi
+
+    if [[ -n $coproc_out_fd ]]; then
+        exec {coproc_out_fd}>&-
+        coproc_out_fd=""
+    fi
+
+    if [[ -n $coproc_in_fifo ]]; then
+        rm "$coproc_in_fifo"
+        coproc_in_fifo=""
+    fi
+
+    if [[ -n $coproc_out_fifo ]]; then
+        rm "$coproc_out_fifo"
+        coproc_out_fifo=""
     fi
 }
 

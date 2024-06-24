@@ -30,8 +30,8 @@ detach. The code tells the server what to do with the running request:
 
 ## Executor loop
 
-Takes commands from standard input and executes them. Requests are separated by
-newlines (`'\n'`).
+Reads commands from $1 (in the format described above) and executes them,
+writing 'done' to $2 when it has finished each request.
 
 ## Call
 
