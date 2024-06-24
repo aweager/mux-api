@@ -15,33 +15,25 @@
                 --spec -title-style:=arg_title_style
         )
 
-        local -A info_dict
+        local -A MuxInfo
         __mux-validate-info-dict || return 1
     "
 
     function __mux-validate-info-dict() {
         if [[ ${#arg_icon[@]} -gt 0 ]]; then
-            local icon
             __mux-validate-icon "$arg_icon[-1]" || return 1
-            info_dict[icon]="$icon"
         fi
 
         if [[ ${#arg_icon_color[@]} -gt 0 ]]; then
-            local iconcolor
-            __mux-validate-iconcolor "$arg_icon_color[-1]" || return 1
-            info_dict[icon-color]="$iconcolor"
+            __mux-validate-icon-color "$arg_icon_color[-1]" || return 1
         fi
 
         if [[ ${#arg_title[@]} -gt 0 ]]; then
-            local title
             __mux-validate-title "$arg_title[-1]" || return 1
-            info_dict[title]="$title"
         fi
 
         if [[ ${#arg_title_style[@]} -gt 0 ]]; then
-            local titlestyle
-            __mux-validate-titlestyle "$arg_title_style[-1]" || return 1
-            info_dict[title-style]="$titlestyle"
+            __mux-validate-title-style "$arg_title_style[-1]" || return 1
         fi
     }
 
@@ -71,25 +63,25 @@
                 --spec -title-style=arg_title_style
         )
 
-        local -a info_keys
+        local -a mux_info_keys
         __mux-validate-info-keys || return 1
     "
 
     function __mux-validate-info-keys() {
         if [[ ${#arg_icon[@]} -gt 0 ]]; then
-            info_keys+=(icon)
+            mux_info_keys+=(icon)
         fi
 
         if [[ ${#arg_icon_color[@]} -gt 0 ]]; then
-            info_keys+=(icon-color)
+            mux_info_keys+=(icon-color)
         fi
 
         if [[ ${#arg_title[@]} -gt 0 ]]; then
-            info_keys+=(title)
+            mux_info_keys+=(title)
         fi
 
         if [[ ${#arg_title_style[@]} -gt 0 ]]; then
-            info_keys+=(title-style)
+            mux_info_keys+=(title-style)
         fi
     }
 
@@ -104,22 +96,22 @@
             --location
     )"
 
-    local key cut_pos arg_name
-    private -A arg_names
-    arg_names=(
-        icon icon
-        icon-color iconcolor
-        title title
-        title-style titlestyle
+    local key cut_pos
+    private -a info_entries
+    info_entries=(
+        icon
+        icon-color
+        title
+        title-style
     )
 
-    for key arg_name in "${(@kv)arg_names}"; do
+    for key in "${info_entries[@]}"; do
         ((cut_pos = ${#key} + 2))
 
         functions[mux-validate-get-$key]="$read_entry_validator"
         functions[mux-exec-get-$key]="
-            local -a info_keys
-            info_keys=($key)
+            local -a mux_info_keys
+            mux_info_keys=($key)
             mux-impl-get-info \
                 | grep ^$key \
                 | cut -c ${cut_pos}-
@@ -127,47 +119,50 @@
 
         functions[mux-validate-resolve-$key]="$read_entry_validator"
         functions[mux-exec-resolve-$key]="
-            local -a info_keys
-            info_keys=($key)
+            local -a mux_info_keys
+            mux_info_keys=($key)
             mux-impl-resolve-info \
                 | grep ^$key \
                 | cut -c ${cut_pos}-
         "
 
         functions[mux-validate-set-$key]="$(
+            local -A MuxInfo
             __mux-build-validator \
                 --scope \
                 --location \
-                $arg_name
+                $key
         )"
 
         functions[mux-exec-set-$key]="
-            local -A info_dict
-            info_dict[$key]=\"\$$arg_name\"
             mux-impl-update-info
         "
     done
 
     function __mux-validate-icon() {
-        icon="$1"
+        MuxArgs[icon]="$1"
+        MuxInfo[icon]="$1"
+
         if [[ ${#1} -ne 1 ]]; then
             echo "Icon must be exactly one character but was \"$1\"" >&2
             return 1
         fi
     }
 
-    function __mux-validate-iconcolor() {
-        iconcolor="$1"
+    function __mux-validate-icon-color() {
+        MuxArgs[icon-color]="$1"
+        MuxInfo[icon-color]="$1"
+
         local -a color_names
         color_names=(black red green yellow blue magenta cyan white)
 
-        if (($color_names[(Ie)$iconcolor])); then
+        if (($color_names[(Ie)$1])); then
             return 0
-        elif [[ $iconcolor =~ '^[0-9]+$' ]]; then
-            if [[ $iconcolor -le 255 ]]; then
+        elif [[ $1 =~ '^[0-9]+$' ]]; then
+            if [[ $1 -le 255 ]]; then
                 return 0
             fi
-        elif [[ $iconcolor =~ '^#([0-9]|[a-f]){6}$' ]]; then
+        elif [[ $1 =~ '^#([0-9]|[a-f]){6}$' ]]; then
             return 0
         fi
 
@@ -176,19 +171,22 @@
     }
 
     function __mux-validate-title() {
-        title="$1"
+        MuxArgs[title]="$1"
+        MuxInfo[title]="$1"
         # TODO valid title chars?
     }
 
-    function __mux-validate-titlestyle() {
-        titlestyle="$1"
-        local -a title_styles
-        title_styles=(default italic)
-        if (($title_styles[(Ie)$titlestyle])); then
+    function __mux-validate-title-style() {
+        MuxArgs[title-style]="$1"
+        MuxInfo[title-style]="$1"
+
+        local -a allowed_title_styles
+        allowed_title_styles=(default italic)
+        if (($allowed_title_styles[(Ie)$1])); then
             return 0
         fi
 
-        echo "Title style must be one of ($title_styles[*]) but was: '$titlestyle'"
+        echo "Title style must be one of ($allowed_title_styles[*]) but was: '$1'"
         return 1
     }
 }

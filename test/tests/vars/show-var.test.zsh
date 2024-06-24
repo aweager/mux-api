@@ -16,10 +16,10 @@ function tab-scoped() {
         assert-empty STDOUT STDERR
 
         assert-equal \
-            cmd_name   show-var \
-            scope      tab \
-            location   t:tab_id \
-            locationid tab_id \
-            varname    name
+            "MuxArgs[cmd]" show-var \
+            "MuxArgs[scope]" tab \
+            "MuxArgs[location]" t:tab_id \
+            "MuxArgs[location-id]" tab_id \
+            "MuxArgs[varname]" name
     }
 }

@@ -71,6 +71,7 @@ function run-file() {
 
     private test_name
     for test_name in "$test_names[@]"; do
+        INDENT=""
         run-test "$test_file" "$test_name"
         echo
     done

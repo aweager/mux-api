@@ -36,9 +36,9 @@
     }
 
     function __mux-validate-varname() {
-        varname="$1"
-        if ! __mux-check-alphanumeric "$varname"; then
-            echo "Variable name must be alphanumeric but was: '$varname'" >&2
+        MuxArgs[varname]="$1"
+        if ! __mux-check-alphanumeric "$1"; then
+            echo "Variable name must be alphanumeric but was: '$1'" >&2
             return 1
         fi
     }

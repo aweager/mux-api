@@ -41,7 +41,6 @@ function __mux-build-validator() {
     done
 
     if [[ ! -z $arg_val_scope ]]; then
-        local_vars+=(scope)
         setup+='
             local -a arg_scope
         '
@@ -52,7 +51,6 @@ function __mux-build-validator() {
     fi
 
     if [[ ! -z $arg_val_location ]]; then
-        local_vars+=(scope location locationid)
         setup+='
             local -a arg_location
         '
@@ -64,14 +62,14 @@ function __mux-build-validator() {
 
     if [[ ! -z $arg_val_scope && ! -z $arg_val_location ]]; then
         validators+='
-            if [[ -z $scope && -z $location ]]; then
+            if [[ -z $MuxArgs[scope] && -z $MuxArgs[location] ]]; then
                 echo "One of scope or location is required" >&2
                 return 1
             fi
         '
     elif [[ ! -z $arg_val_scope ]]; then
         validators+='
-            if [[ -z $scope ]]; then
+            if [[ -z $MuxArgs[scope] ]]; then
                 echo "Scope is required" >&2
                 return 1
             fi
@@ -82,7 +80,7 @@ function __mux-build-validator() {
         validators+="
             local -a allowed_scopes
             allowed_scopes=($allowed_scopes)
-            if ! [[ -z \$scope || \$allowed_scopes[(Ie)\$scope] -gt 0 ]]; then
+            if ! [[ -z \$MuxArgs[scope] || \$allowed_scopes[(Ie)\$MuxArgs[scope]] -gt 0 ]]; then
                 echo 'Only ($allowed_scopes) scopes are allowed' >&2
                 return 1
             fi
@@ -98,14 +96,14 @@ function __mux-build-validator() {
     if [[ $num_args -eq 0 ]]; then
         validators+='
             if [[ $# -ne 0 ]]; then
-                echo "$cmd_name: expected 0 arguments but received $#: ($*)" >&2
+                echo "$MuxArgs[cmd]: expected 0 arguments but received $#: ($*)" >&2
                 return 1
             fi
         '
     else
         validators+="
             if [[ \$# -ne $num_args ]]; then
-                echo \"\$cmd_name: expected $num_args arguments ($positional_arg_names[*]) but received \$#: (\$*)\" >&2
+                echo \"\$MuxArgs[cmd]: expected $num_args arguments ($positional_arg_names[*]) but received \$#: (\$*)\" >&2
                 return 1
             fi
         "
@@ -115,7 +113,6 @@ function __mux-build-validator() {
     local index=1
     local arg_name
     for arg_name in $positional_arg_names; do
-        local_vars+=($arg_name)
         validators+="
             __mux-validate-$arg_name \"\$$index\" || return 1
         "
@@ -123,7 +120,6 @@ function __mux-build-validator() {
     done
 
     echo "
-        local ${local_vars[*]}
         $setup
 
         zmodload zsh/zutil
@@ -151,7 +147,7 @@ function __mux-validate-arg-scope() {
         -b buffer
     )
 
-    scope=$valid_scopes[$scope_key]
+    MuxArgs[scope]=$valid_scopes[$scope_key]
     if [[ -z $scope ]]; then
         echo "Invalid scope: '$scope_key'" >&2
         return 1
@@ -163,7 +159,8 @@ function __mux-validate-arg-location() {
         return
     fi
 
-    location="$arg_location[-1]"
+    local location="$arg_location[-1]"
+    MuxArgs[location]="$location"
     local location_prefix="${location:0:2}"
     local location_scope
 
@@ -190,21 +187,21 @@ function __mux-validate-arg-location() {
             ;;
     esac
 
-    if [[ -n $scope ]]; then
-        if [[ $scope != $location_scope ]]; then
-            echo "Specified scope '$scope' does not match specified location '$location'" >&2
+    if [[ -n $MuxArgs[scope] ]]; then
+        if [[ $MuxArgs[scope] != $location_scope ]]; then
+            echo "Specified scope '$MuxArgs[scope]' does not match specified location '$location'" >&2
             return 1
         fi
     else
-        scope="$location_scope"
+        MuxArgs[scope]="$location_scope"
     fi
 
-    locationid="${location:2}"
+    MuxArgs[location-id]="${location:2}"
 }
 
 function __mux-validate-value() {
     # Nothing is forbidden
-    value="$1"
+    MuxArgs[value]="$1"
 }
 
 function __mux-check-alphanumeric() {

@@ -8,17 +8,20 @@ function __mux-parse-and-call-system() {
 }
 
 function __mux-system-sync-registers-down() {
-    local parent_mux_cmd="$("${cmd_prefix}get-parent-mux")"
+    private parent_mux_cmd="$("${cmd_prefix}get-parent-mux")"
     if [[ -z $parent_mux_cmd ]]; then
         echo "No parent mux" >&2
         return 1
     fi
 
-    local -a parent_regnames
+    private -a parent_regnames
     parent_regnames=($(eval "$parent_mux_cmd" list-registers))
 
+    private regname
     for regname in $parent_regnames; do
-        local value="$(eval "$parent_mux_cmd" get-register $regname)"
+        private value="$(eval "$parent_mux_cmd" get-register $regname)"
+        MuxArgs[regname]="$regname"
+        MuxArgs[value]="$value"
         "${cmd_prefix}set-register"
     done
 

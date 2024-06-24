@@ -42,13 +42,13 @@
     }
 
     function __mux-validate-regname() {
-        regname="$1"
-        if [[ "$regname" == "unnamed" ]]; then
+        MuxArgs[regname]="$1"
+        if [[ "$1" == "unnamed" ]]; then
             return 0
         fi
 
-        if [[ ${#regname} -ne 1 || "$regname" =~ [^a-z] ]]; then
-            echo "Register name must be [a-z] or \"unnamed\" but was \"$regname\"" >&2
+        if [[ ${#1} -ne 1 || "$1" =~ [^a-z] ]]; then
+            echo "Register name must be [a-z] or \"unnamed\" but was \"$1\"" >&2
             return 1
         fi
     }

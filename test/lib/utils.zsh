@@ -11,6 +11,9 @@ function maybe-print() {
 
 function maybe-print-all() {
     maybe-print \
+        MuxArgs \
+        MuxInfo \
+        mux_info_keys \
         cmd_name \
         scope \
         location \

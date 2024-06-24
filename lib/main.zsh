@@ -1,14 +1,15 @@
 #!/bin/zsh
 
 function mux() {
-    local cmd_name="$1"
-    if [[ ! -v functions[__mux-cmd-$cmd_name] ]]; then
-        echo "Unknown mux command $cmd_name" >&2
+    local -A MuxArgs
+    MuxArgs[cmd]="$1"
+    if [[ ! -v functions[__mux-cmd-$1] ]]; then
+        echo "Unknown mux command $1" >&2
         return 1
     fi
 
     shift
-    "__mux-cmd-${cmd_name}" "$@"
+    "__mux-cmd-${MuxArgs[cmd]}" "$@"
 }
 
 () {
