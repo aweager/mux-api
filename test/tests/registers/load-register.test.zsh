@@ -1,10 +1,6 @@
 #!/bin/zsh
 
-test_names=(
-    unnamed
-)
-
-function unnamed() {
+function unnamed.test() {
     function arrange() { }
 
     function act() {

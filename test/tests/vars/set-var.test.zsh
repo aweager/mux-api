@@ -1,11 +1,6 @@
 #!/bin/zsh
 
-test_names=(
-    tab-scoped
-    old-vars-unset
-)
-
-function tab-scoped() {
+function tab-scoped.test() {
     function arrange() { }
 
     function act() {
@@ -26,7 +21,7 @@ function tab-scoped() {
     }
 }
 
-function old-vars-unset() {
+function old-vars-unset.test() {
     function arrange() { }
 
     function act() {

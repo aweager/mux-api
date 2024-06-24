@@ -41,7 +41,6 @@ function main() {
     local -A TestResults
     local -A TestOutputs
     local -A TestErrors
-    local -a test_names
 
     if [[ -n "$test_name" ]]; then
         INDENT=""
@@ -66,13 +65,18 @@ function main() {
 function run-file() {
     private test_file="$1"
 
-    test_names=()
     source "$test_file"
+
+    private -a func_names
+    func_names=(${(@k)functions})
+    private -a test_names
+    test_names=(${(M)func_names:#*.test})
 
     private test_name
     for test_name in "$test_names[@]"; do
         INDENT=""
         run-test "$test_file" "$test_name"
+        unfunction "$test_name"
         echo
     done
 }

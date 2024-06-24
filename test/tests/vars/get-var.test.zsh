@@ -1,10 +1,6 @@
 #!/bin/zsh
 
-test_names=(
-    tab-scoped
-)
-
-function tab-scoped() {
+function tab-scoped.test() {
     function arrange() { }
 
     function act() {
