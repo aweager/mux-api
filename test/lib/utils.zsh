@@ -1,8 +1,10 @@
+source "${0:a:h}/../test-utils.zsh"
+
 function maybe-print() {
     local name
     for name; do
         if [[ -v "$name" ]]; then
-            echo "$name='${(P)name}'"
+            report-parameter "$name"
         fi
     done
 }
@@ -16,9 +18,6 @@ function maybe-print-all() {
         varname \
         regname \
         info_keys \
-        "info_dict[icon]" \
-        "info_dict[icon-color]" \
-        "info_dict[title]" \
-        "info_dict[title-style]" \
+        info_dict \
         value
 }

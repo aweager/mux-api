@@ -26,7 +26,8 @@ zmodload zsh/param/private
         return 1
     fi
 
-    build-invoker --invoker __${func_to_build}-impl \
+    # TODO propertly depend
+    source "$dir/../../../private-func/fbin/build-invoker" --invoker __${func_to_build}-impl \
         "$dir/utils.zsh" \
         "$dir/vars.zsh" \
         "$dir/info.zsh" \

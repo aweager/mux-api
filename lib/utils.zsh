@@ -113,6 +113,7 @@ function __mux-build-validator() {
 
     local positional_arg_name
     local index=1
+    local arg_name
     for arg_name in $positional_arg_names; do
         local_vars+=($arg_name)
         validators+="

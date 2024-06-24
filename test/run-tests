@@ -1,0 +1,145 @@
+#!/bin/zsh
+
+cd "${0:a:h}"
+source test-utils.zsh
+
+zmodload zsh/param/private
+zmodload zsh/zutil
+
+export INDENT=""
+
+function main() {
+    private -a arg_invocation_type
+    private -a arg_test_file
+    private -a arg_test_name
+
+    zparseopts -D -E -F -- \
+        {b,f}=arg_invocation_type \
+        -test-file:=arg_test_file \
+        -test-name:=arg_test_name || return 1
+
+    private test_file
+    if [[ -n $arg_test_file[-1] ]]; then
+        test_file="$arg_test_file[-1]"
+    fi
+
+    private test_name
+    if [[ -n $arg_test_name[-1] ]]; then
+        test_name="$arg_test_name[-1]"
+    fi
+
+    source test-mux.plugin.zsh
+    local SUT
+    if [[ "$arg_invocation_type[-1]" == -b ]]; then
+        SUT="./bin/test-mux"
+    else
+        SUT="test-mux"
+    fi
+
+    local -A TestFiles
+    local -A TestNames
+    local -A TestResults
+    local -A TestOutputs
+    local -A TestErrors
+    local -a test_names
+
+    if [[ -n "$test_name" ]]; then
+        INDENT=""
+        source "$test_file"
+        run-test "$test_file" "$test_name"
+    elif [[ -n "$test_file" ]]; then
+        INDENT=""
+        run-file "$test_file"
+    else
+        for test_file in tests/**/*.test.zsh; do
+            INDENT=""
+            run-file "$test_file"
+        done
+    fi
+
+    echo
+
+    INDENT=""
+    show-results
+}
+
+function run-file() {
+    private test_file="$1"
+
+    test_names=()
+    source "$test_file"
+
+    private test_name
+    for test_name in "$test_names[@]"; do
+        run-test "$test_file" "$test_name"
+        echo
+    done
+}
+
+function run-test() {
+    private test_file="$1"
+    private test_name="$2"
+    private test_key="${test_file}::${test_name}"
+    stdout "%F{yellow}RUNNING FILE%f ${test_file} %F{yellow}TEST%f ${test_name}..."
+    INDENT="    "
+
+    "$test_name"
+
+    local fd1 fd2 reported_params_file
+    {
+        fd1="$(mktemp)"
+        fd2="$(mktemp)"
+        reported_params_file="$(mktemp)"
+        (
+            arrange
+            UNDER_TEST=1 REPORTED_PARAMS_FILE="$reported_params_file" \
+                act 3>&1 4>&2 1> "$fd1" 2> "$fd2"
+        )
+
+        local STDOUT="$(cat "$fd1")"
+        local STDERR="$(cat "$fd2")"
+        (
+            source "$reported_params_file"
+            assert
+        )
+
+        private result="$?"
+        TestFiles[$test_key]="$test_file"
+        TestNames[$test_key]="$test_name"
+        TestResults[$test_key]="$result"
+        TestOutputs[$test_key]="$STDOUT"
+        TestErrors[$test_key]="$STDERR"
+
+        return $result
+    } always {
+        [[ -f "$fd1" ]] && rm "$fd1"
+        [[ -f "$fd2" ]] && rm "$fd2"
+        [[ -f "$reported_params_file" ]] && rm "$reported_params_file"
+    }
+}
+
+function show-results() {
+    local key val
+    local -a failures successes
+    for key val in "${(@kv)TestResults}"; do
+        if [[ "$val" -ne 0 ]]; then
+            failures+=("$key")
+        else
+            successes+=("$key")
+        fi
+    done
+
+    local num_tests
+    (( num_tests = ${#failures} + ${#successes} ))
+    if [[ ${#failures} -gt 0 ]]; then
+        stderr "%F{red}FAILURE%f: ${#failures} / $num_tests tests failed:"
+        INDENT="    "
+        for key in "$failures[@]"; do
+            stderr "%F{yellow}FILE%f $TestFiles[$key] %F{yellow}TEST%f $TestNames[$key] -> $TestResults[$key]"
+        done
+    else
+        stdout "%F{green}SUCCESS: $num_tests / $num_tests passed%f"
+    fi
+}
+
+main "$@"
