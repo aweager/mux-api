@@ -3,7 +3,6 @@
 () {
     local script_dir="${1:a:h}"
 
-    # TODO properly depend
     source "$script_dir/../../lib/build-mux.zsh" test-mux "$script_dir/../lib/configure.zsh"
 } "$(whence -p test-mux)"
 
