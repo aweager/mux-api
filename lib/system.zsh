@@ -1,3 +1,15 @@
+#### System commands
+
+mux_cmds+=(
+    link-child
+    unlink-child
+    link-parent
+    unlink-parent
+    redraw-status
+    sync-registers-down
+    sync-registers-up
+)
+
 function @link-child() {
     function build-args-parser() {
         .build-standard-parser \

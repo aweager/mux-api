@@ -54,7 +54,7 @@ zmodload zsh/param/private
             "$file_to_source" \
             "main.zsh"
 
-        functions[$func_to_build]="\"__${func_to_build}-impl\" this-mux \"\$@\""
+        functions[$func_to_build]="\"__${func_to_build}-impl\" main \"\$@\""
     } always {
         popd -q
     }

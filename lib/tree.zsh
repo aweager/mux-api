@@ -1,3 +1,15 @@
+#### Tree-related commands
+#
+# Required mux impls:
+#   - export-vars
+#   - get-mux-cmd
+
+mux_cmds+=(
+    get-child-mux
+    get-parent-mux
+    get-mux-cmd
+)
+
 function @get-child-mux() {
     function build-args-parser() {
         .build-standard-parser \
@@ -49,6 +61,8 @@ function @get-mux-cmd() {
         echo "$REPLY"
     }
 }
+
+### Parsers ###
 
 function .parse-muxcmd() {
     MuxArgs[muxcmd]="$1"

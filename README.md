@@ -114,6 +114,8 @@ commands.
 Retrieving data:
 - _show_: displays one or more values in a way appropriate for interactive use
 - _get_: gets a value without trailing newline (like `echo -n`)
+- _resolve_: for local values, inherits non-existent keys upward from lower
+  scopes, and reports the resolved value
 - _has_: succeeds if the key exists, fails otherwise
 - _list_: prints a list of keys separated by newlines
 
@@ -125,12 +127,12 @@ Modifying data:
 - _delete_: unsets one or more values
 
 Piping data to and from files (usually fifos):
-- _save_: saves multiple values, specified as a map from key -> file to write
+- _export_: saves multiple values, specified as a map from key -> file to write
   to. Analogous to "get"
-- _replace_: replaces the value store with the contents of the files specified
-  in the arguments. Analogous to "set"
-- _load_: loads multiple values into the store, specified as a map from key ->
-  file to read from. Analogous to "update"
+- _replace_: replaces all values in the store with the contents of the files
+  specified in the arguments. Analogous to "set"
+- _import_: loads multiple values into the store, but leaves unspecified keys
+  intact. Analogous to "update"
 
 #### Scopes
 
@@ -197,7 +199,7 @@ list-registers
 
 ```zsh
 set-register ${regname} ${value}
-delete-registers ${regname} ...
+delete-register ${regname}
 ```
 
 #### Piping Registers to/from Files

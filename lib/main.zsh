@@ -1,63 +1,17 @@
 #!/bin/zsh
 
-function this-mux() {
-    # initialize variables that impls will read or write
-    local -A MuxArgs
-    local -A MuxValues
-    local -A MuxFifos
-    local -a mux_argv
-    local -a mux_varnames
-    local -a mux_regnames
-
-    MuxArgs[cmd]="$1"
-    if [[ ! -v functions[@$1] ]]; then
-        echo "Unknown mux command $1" >&2
-        return 1
-    fi
-
-    shift
-    "@${MuxArgs[cmd]}" "$@"
-}
-
 () {
-    private -a mux_cmds
-    mux_cmds=(
-        set-var
-        delete-var
-        show-var
-        get-var
+    source "$1/utils.zsh"
+    source "$1/validators.zsh"
 
-        set-register
-        load-register
-        delete-register
-        show-register
-        get-register
-        list-registers
-        dump-registers
+    local -a mux_cmds
+    source "$1/vars.zsh"
+    source "$1/registers.zsh"
+    source "$1/tree.zsh"
+    source "$1/info.zsh"
+    source "$1/system.zsh"
 
-        get-child-mux
-        get-parent-mux
-        get-mux-cmd
-
-        link-child
-        link-parent
-        unlink-child
-        unlink-parent
-
-        set-info
-        update-info
-        get-info
-        resolve-info
-
-        sync-registers-down
-        sync-registers-up
-    )
-
-    private info_key
-    for info_key in icon icon-color title title-style; do
-        mux_cmds+=(get-${info_key} set-${info_key} resolve-${info_key})
-    done
-
+    private -A MuxCmds
     private cmd
     for cmd in $mux_cmds; do
         "@$cmd"
@@ -66,8 +20,35 @@ function this-mux() {
         functions[@$cmd]="
             \"@$cmd.parse-args\" \"\$@\" &&
             \"@$cmd.impl\"
+            return \$?
         "
+        MuxCmds[$cmd]="@$cmd"
 
         unfunction build-args-parser impl
     done
-}
+
+    functions[main]="
+        local -A MuxCmds
+        MuxCmds=(${(kv)MuxCmds})
+        this-mux \"\$@\"
+    "
+
+    function this-mux() {
+        # initialize variables that impls will read or write
+        local -A MuxArgs
+        local -A MuxValues
+        local -A MuxFifos
+        local -a mux_argv
+        local -a mux_varnames
+        local -a mux_regnames
+
+        if [[ ! -v MuxCmds[$1] ]]; then
+            echo "Unknown mux command $1" >&2
+            return 1
+        fi
+
+        MuxArgs[cmd]="$1"
+        shift
+        "@${MuxArgs[cmd]}" "$@"
+    }
+} "${0:a:h}"

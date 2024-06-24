@@ -1,44 +1,22 @@
-function @set-info() {
-    function build-args-parser() {
-        .build-info-dict-parser
-    }
+#### Info commands ####
+#
+# Required mux impls:
+#   - export-vars
+#   - import-vars
+#   - replace-vars
+#   - resolve-vars
+#   - list-vars
+#   - delete-vars
 
-    function impl() {
-        {
-            .write-values
 
-            local -a mux_varnames
-            mux_varnames=(${(@k)MuxValues})
+### Retrieving data ###
+mux_cmds+=(
+    show-info
+    resolve-info
+    list-info
+)
 
-            MuxArgs[namespace]="info"
-            mux-impl-set-vars
-        } always {
-            .cleanup-fifos
-        }
-    }
-}
-
-function @update-info() {
-    function build-args-parser() {
-        .build-info-dict-parser
-    }
-
-    function impl() {
-        {
-            .write-values
-
-            local -a mux_varnames
-            mux_varnames=(${(@k)MuxValues})
-
-            MuxArgs[namespace]="info"
-            mux-impl-update-vars
-        } always {
-            .cleanup-fifos
-        }
-    }
-}
-
-function @get-info() {
+function @show-info() {
     function build-args-parser() {
         .build-info-list-parser
     }
@@ -82,9 +60,95 @@ function @resolve-info() {
     }
 }
 
+function @list-info() {
+    function build-args-parser() {
+        .build-standard-parser # no args
+    }
+
+    function impl() {
+        local -a reply
+        reply=()
+
+        MuxArgs[namespace]="info"
+        mux-impl-list-vars
+
+        print -rC1 "$reply[@]"
+    }
+}
+
+### Modifying data ###
+mux_cmds+=(
+    set-info
+    update-info
+    delete-info
+)
+
+function @set-info() {
+    function build-args-parser() {
+        .build-info-dict-parser
+    }
+
+    function impl() {
+        {
+            .write-values
+
+            local -a mux_varnames
+            mux_varnames=(${(@k)MuxValues})
+
+            MuxArgs[namespace]="info"
+            mux-impl-set-vars
+        } always {
+            .cleanup-fifos
+        }
+    }
+}
+
+function @update-info() {
+    function build-args-parser() {
+        .build-info-dict-parser
+    }
+
+    function impl() {
+        {
+            .write-values
+
+            local -a mux_varnames
+            mux_varnames=(${(@k)MuxValues})
+
+            MuxArgs[namespace]="info"
+            mux-impl-update-vars
+        } always {
+            .cleanup-fifos
+        }
+    }
+}
+
+function @delete-info() {
+    function build-args-parser() {
+        .build-info-list-parser
+    }
+
+    function impl() {
+        MuxArgs[namespace]="info"
+        mux-impl-delete-vars
+    }
+}
+
+### Piping data to/from files ###
+
+# TODO
+
+### Per-key functions ###
+
 () {
     private key
     for key in icon icon-color title title-style; do
+        mux_cmds+=(
+            get-$key
+            resolve-$key
+            set-$key
+        )
+
         functions[@get-$key]="
             function build-args-parser() {
                 .build-standard-parser \
@@ -150,6 +214,8 @@ function @resolve-info() {
         "
     done
 }
+
+### Parsers ###
 
 function .parse-icon() {
     MuxArgs[icon]="$1"
