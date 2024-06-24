@@ -1,29 +1,45 @@
-function __mux-parse-and-call-set-var() {
-    eval "$(
+() {
+    functions[mux-validate-set-var]="$(
         __mux-build-validator \
             --scope \
             --location \
             varname value
     )"
 
-    "${cmd_prefix}${cmd_name}"
-}
+    function mux-exec-set-var() {
+        mux-impl-set-var
+    }
 
-function __mux-parse-and-call-varname-only() {
-    eval "$(
+    local varname_only="$(
         __mux-build-validator \
             --scope \
             --location \
             varname
     )"
 
-    "${cmd_prefix}${cmd_name}"
-}
+    functions[mux-validate-get-var]="$varname_only"
 
-function __mux-validate-varname() {
-    varname="$1"
-    if ! __mux-check-alphanumeric "$1"; then
-        echo "Variable name must be alphanumeric but was: '$varname'" >&2
-        return 1
-    fi
+    function mux-exec-get-var() {
+        mux-impl-get-var
+    }
+
+    functions[mux-validate-show-var]="$varname_only"
+
+    function mux-exec-show-var() {
+        mux-impl-show-var
+    }
+
+    functions[mux-validate-delete-var]="$varname_only"
+
+    function mux-exec-delete-var() {
+        mux-impl-delete-var
+    }
+
+    function __mux-validate-varname() {
+        varname="$1"
+        if ! __mux-check-alphanumeric "$varname"; then
+            echo "Variable name must be alphanumeric but was: '$varname'" >&2
+            return 1
+        fi
+    }
 }

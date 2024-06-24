@@ -1,10 +1,3 @@
-function __mux-parse-and-call-no-args() {
-    eval "$(__mux-build-validator)"
-
-    "${cmd_prefix}${cmd_name}"
-}
-
-# @formatter:off
 function __mux-build-validator() {
     local -a arg_val_allowed_scopes
     local -a arg_val_scope
@@ -19,7 +12,7 @@ function __mux-build-validator() {
         -spec+:-=arg_val_spec ||
     return 1
 
-    local -a local_vars
+    local -a -U local_vars
     local setup=''
     local opt_specs=""
     local validators=""
@@ -112,7 +105,7 @@ function __mux-build-validator() {
     else
         validators+="
             if [[ \$# -ne $num_args ]]; then
-                echo \"$cmd_name: expected $num_args arguments ($positional_arg_names[*]) but received \$#: (\$*)\" >&2
+                echo \"\$cmd_name: expected $num_args arguments ($positional_arg_names[*]) but received \$#: (\$*)\" >&2
                 return 1
             fi
         "
@@ -129,7 +122,7 @@ function __mux-build-validator() {
     done
 
     echo "
-        local ${(u)local_vars}
+        local ${local_vars[*]}
         $setup
 
         zmodload zsh/zutil
@@ -138,7 +131,6 @@ function __mux-build-validator() {
         $validators
     "
 }
-# @formatter:on
 
 function __mux-validate-arg-scope() {
     if [[ -z $arg_scope ]]; then
