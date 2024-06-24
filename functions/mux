@@ -10,24 +10,34 @@ function mux() {
     fi
 
     local -a arg_level
-    arg_level=(0) # defaults to top of stack
+    local -a arg_instance
 
     zmodload zsh/zutil
-    zparseopts -D -K -- \
-        {L,-level}:=arg_level ||
-    return 1
+    zparseopts -D -- \
+        {L,-level}:=arg_level \
+        {I,-instance}:=arg_instance ||
+    return
 
-    local mux_level="$arg_level[-1]"
-    if ! [[ $mux_level =~ ^-?[0-9]+$ ]]; then
-        echo "Level must be an integer" >&2
+    local mux_cmd
+    if [[ -n $arg_level  && -n $arg_instance ]]; then
+        echo "At most one of level or instance may be specified" >&2
         return 1
+    elif [[ -n $arg_instance ]]; then
+        mux_cmd="$arg_instance[-1]"
+    else
+        local mux_level="${arg_level[-1]-0}"
+        if ! [[ $mux_level =~ ^-?[0-9]+$ ]]; then
+            echo "Level must be an integer" >&2
+            return 1
+        fi
+
+        if [[ $mux_level -ge 0 ]]; then
+            ((mux_level += 1))
+        fi
+
+        mux_cmd="$mux_stack[$mux_level]"
     fi
 
-    if [[ $mux_level -ge 0 ]]; then
-        ((mux_level += 1))
-    fi
-
-    local mux_cmd="$mux_stack[$mux_level]"
     eval "$mux_cmd" "\"${(j[" "])@}\""
     return $?
 }

@@ -159,3 +159,7 @@ Output:
 ```
 REPLY # the command
 ```
+
+#### mux-impl-redraw-status
+
+No input or output. Redraws the status indicators.

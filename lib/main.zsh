@@ -1,6 +1,6 @@
 #!/bin/zsh
 
-function mux() {
+function this-mux() {
     # initialize variables that impls will read or write
     local -A MuxArgs
     local -A MuxValues

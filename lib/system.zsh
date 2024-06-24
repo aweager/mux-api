@@ -1,6 +1,11 @@
 () {
     local no_args="$(__mux-build-validator)"
 
+    functions[mux-validate-redraw-status]="$no_args"
+    function mux-exec-redraw-status() {
+        mux-impl-redraw-status
+    }
+
     functions[mux-validate-sync-registers-down]="$no_args"
     function mux-exec-sync-registers-down() {
         private parent_mux="$(mux-exec-get-parent-mux)"
@@ -27,7 +32,9 @@
         }
     }
 
-    functions[mux-validate-sync-registers-up]="$no_args"
+    local location="$(__mux-build-validator --location)"
+
+    functions[mux-validate-sync-registers-up]="$location"
     function mux-exec-sync-registers-up() {
         private child_mux="$(mux-exec-get-child-mux)"
 

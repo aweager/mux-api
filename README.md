@@ -87,11 +87,13 @@ also supports overriding that at subsequently higher scopes.
 
 ## API
 
-`mux [--level <level>] <command> [<command options and args>]`
+`mux [--level <level> | --instance <instance>] <command> [<command options and args>]`
 
 - `-L, --level`: the level in the stack to run the command on. The top of the
   stack is `0`, counting upward. Negative numbers can be used to reference the
   bottom of the stack starting at `-1`
+- `-I, --instance`: the mux instance to run the command on. At most one of
+  `--level` or `--instance` may be specified.
 
 ### Levels and the Mux Stack
 
@@ -200,40 +202,9 @@ process.
 The positional arguments define a map from `regname` -> `fifo`, repeated for as
 many registers as desired.
 
-### Mux Tree
-
-Mux sessions exist in a tree structure -- the buffer of one mux might be
-running a mux session of a child. So each buffer can point to its child
-mux session, and each mux session can point to its parent mux session.
-
-#### register-child-mux
-
-`register-child-mux <muxcmd>`
-
-Informs this mux session that the current buffer is running a mux session.
-
-- `<muxcmd>`: a command which can be used to interact with child session
-  through this API
-
-#### unregister-child-mux
-
-`unregister-child-mux` (no arguments)
-
-Informs this mux session that the current buffer is not running a mux session.
-
-#### get-child-mux
-
-`get-child-mux` (no arguments)
-
-Gets the command set with `register-child-mux`
-
-#### get-mux-cmd
-
-`get-mux-cmd` (no arguments)
-
-Gets the command that can be used to interact with this mux session.
-
 ### Info
+
+When info is changed, the mux should redraw its status indicators.
 
 #### set-info
 
@@ -273,20 +244,67 @@ new line.
 
 `resolve-icon [scope/location] <scope>`
 
+### Mux Tree
+
+Mux sessions exist in a tree structure -- the buffer of one mux might be
+running a mux session of a child. So each buffer can point to its child
+mux session, and each mux session can point to its parent mux session.
+
+#### register-child-mux
+
+`register-child-mux [location] <muxcmd>`
+
+Informs this mux session that the specified buffer is running a mux session.
+
+- `<muxcmd>`: a command which can be used to interact with child session
+  through this API
+
+#### unregister-child-mux
+
+`unregister-child-mux [location]`
+
+Informs this mux session that the specified buffer is not running a mux session.
+
+#### get-child-mux
+
+`get-child-mux [location]`
+
+Gets the command set with `register-child-mux`
+
+#### get-mux-cmd
+
+`get-mux-cmd` (no arguments)
+
+Gets the command that can be used to interact with this mux session.
+
 ### System Calls
 
 These calls are used to coordinate interactions between muxes in a tree.
+
+#### redraw-status
+
+`redraw-status` (no arguments)
+
+Instructs this mux to redraw / refresh any status indicators that depend on mux
+info or variables.
 
 #### sync-registers-down
 
 `sync-registers-down` (no arguments)
 
 Sets the values of the registers in this mux session to the values stored by
-the parent session.
+the parent mux.
 
 #### sync-registers-up
 
-`sync-registers-up` (no arguments)
+`sync-registers-up [location]`
 
 Sets the values of the registers in this mux session to the values stored by
-the current buffer's child session.
+the child mux at the specified location.
+
+#### sync-child-info
+
+`sync-child-info [location]`
+
+Sets the info at the specified buffer location to the session-level info of the
+child mux it is running.
