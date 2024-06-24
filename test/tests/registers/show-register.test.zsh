@@ -9,7 +9,13 @@ function unnamed.test() {
 
     function assert() {
         setopt err_return
-        assert-empty STDOUT STDERR
+        assert-empty STDERR
+
+        assert-equal \
+            STDOUT \
+"getting registers
+Value for unnamed
+"
 
         assert-equal \
             "MuxArgs[cmd]" show-register \

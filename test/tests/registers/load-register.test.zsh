@@ -11,11 +11,15 @@ function unnamed.test() {
         setopt err_return
         assert-empty STDERR
 
-        assert-equal STDOUT value
+        assert-equal \
+            STDOUT \
+"updating registers
+"
 
         assert-equal \
             "MuxArgs[cmd]" load-register \
-            "MuxArgs[regname]" unnamed
+            "MuxArgs[regname]" unnamed \
+            "FifoValues[unnamed]" value
 
         assert-unset \
             "MuxArgs[scope]" \

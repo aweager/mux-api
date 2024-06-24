@@ -29,14 +29,12 @@ zmodload zsh/param/private
     # TODO propertly depend
     source "$dir/../../../private-func/fbin/build-invoker" --invoker __${func_to_build}-impl \
         "$dir/utils.zsh" \
+        "$dir/validators.zsh" \
         "$dir/vars.zsh" \
         "$dir/info.zsh" \
         "$dir/registers.zsh" \
         "$file_to_source" \
         "$dir/main.zsh"
-
-        #"$dir/tree.zsh" \
-        #"$dir/tabs.zsh" \
 
     functions[$func_to_build]="__${func_to_build}-impl mux \"\$@\""
 

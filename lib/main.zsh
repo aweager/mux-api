@@ -9,6 +9,7 @@ function mux() {
     fi
 
     shift
+    local -A MuxValues
     "__mux-cmd-${MuxArgs[cmd]}" "$@"
 }
 
@@ -37,10 +38,6 @@ function mux() {
         update-info
         get-info
         resolve-info
-
-        pin-tab
-        unpin-tab
-        toggle-pin-tab
 
         sync-registers-down
         sync-registers-up

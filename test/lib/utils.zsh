@@ -10,8 +10,15 @@ function maybe-print() {
 }
 
 function maybe-print-all() {
+    # New-style vars
     maybe-print \
         MuxArgs \
+        MuxFifos \
+        mux_regnames \
+        mux_varnames
+
+    # Old-style vars
+    maybe-print \
         MuxInfo \
         mux_info_keys \
         cmd_name \

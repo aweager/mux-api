@@ -9,7 +9,12 @@ function tab-scoped.test() {
 
     function assert() {
         setopt err_return
-        assert-empty STDOUT STDERR
+        assert-empty STDERR
+
+        assert-equal \
+            STDOUT \
+"updating vars
+"
 
         assert-equal \
             "MuxArgs[cmd]" set-var \
@@ -17,7 +22,8 @@ function tab-scoped.test() {
             "MuxArgs[location]" t:tab_id \
             "MuxArgs[location-id]" tab_id \
             "MuxArgs[varname]" name \
-            "MuxArgs[value]" value
+            "MuxArgs[value]" value \
+            "MuxArgs[namespace]" user
     }
 }
 

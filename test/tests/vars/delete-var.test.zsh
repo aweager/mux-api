@@ -16,6 +16,7 @@ function tab-scoped.test() {
             "MuxArgs[scope]" tab \
             "MuxArgs[location]" t:tab_id \
             "MuxArgs[location-id]" tab_id \
-            "MuxArgs[varname]" name
+            "MuxArgs[varname]" name \
+            "MuxArgs[namespace]" user
     }
 }

@@ -1,6 +1,10 @@
 #### Reporting parameter values for inspection during assert stage
 
 function report-parameter() {
+    if [[ -z "$REPORTED_PARAMS_FILE" ]]; then
+        return
+    fi
+
     local -T PARAM_TYPES param_types '-'
     PARAM_TYPES="${(tP)1}"
 
@@ -120,7 +124,7 @@ function assert-equal() {
             error "Expected param $p to have value '$v' but was unset"
             return 1
         elif [[ "${(P)p}" != "$v" ]]; then
-            error "Expected param $p to have value '$v' but had value: ${(P)p}"
+            error "Expected param $p to have value '$v' but had value: '${(P)p}'"
             return 2
         fi
     done

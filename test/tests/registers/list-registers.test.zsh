@@ -1,10 +1,10 @@
 #!/bin/zsh
 
-function unnamed.test() {
+function list-registers.test() {
     function arrange() { }
 
     function act() {
-        "$SUT" get-register unnamed
+        "$SUT" list-registers
     }
 
     function assert() {
@@ -13,19 +13,18 @@ function unnamed.test() {
 
         assert-equal \
             STDOUT \
-"getting registers
-Value for unnamed"
+"unnamed
+a
+b
+c
+"
 
         assert-equal \
-            "MuxArgs[cmd]" get-register \
-            "MuxArgs[regname]" unnamed
+            "MuxArgs[cmd]" list-registers
 
         assert-unset \
             "MuxArgs[scope]" \
             "MuxArgs[location]" \
-            "MuxArgs[location-id]" \
-            "MuxArgs[varname]" \
-            "MuxArgs[value]" \
-            regname
+            "MuxArgs[location-id]"
     }
 }

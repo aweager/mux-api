@@ -5,7 +5,16 @@
     )"
 
     function mux-exec-set-register() {
-        mux-impl-set-register
+        local -A MuxValues
+        MuxValues[$MuxArgs[regname]]="$MuxArgs[value]"
+
+        local -A MuxFifos
+        {
+            __mux-write-values
+            mux-impl-update-registers
+        } always {
+            __mux-cleanup-fifos
+        }
     }
 
     local regname_only="$(
@@ -15,22 +24,40 @@
 
     functions[mux-validate-get-register]="$regname_only"
     function mux-exec-get-register() {
-        mux-impl-get-register
+        private regname="$MuxArgs[regname]"
+        local -A MuxFifos
+        {
+            __mux-make-fifos "$regname"
+            mux-impl-get-registers &!
+            (< "$MuxFifos[$regname]")
+        } always {
+            __mux-cleanup-fifos
+        }
     }
 
     functions[mux-validate-show-register]="$regname_only"
     function mux-exec-show-register() {
-        mux-impl-show-register
+        echo "$(mux-exec-get-register)"
     }
 
     functions[mux-validate-delete-register]="$regname_only"
     function mux-exec-delete-register() {
-        mux-impl-delete-register
+        local -a mux_regnames
+        mux_regnames=($MuxArgs[regname])
+        mux-impl-delete-registers
     }
 
     functions[mux-validate-load-register]="$regname_only"
     function mux-exec-load-register() {
-        mux-impl-load-register
+        private regname="$MuxArgs[regname]"
+        local -A MuxFifos
+        {
+            __mux-make-fifos "$regname"
+            cat > "$MuxFifos[$regname]" &!
+            mux-impl-update-registers
+        } always {
+            __mux-cleanup-fifos
+        }
     }
 
     functions[mux-validate-list-registers]="$(
@@ -38,7 +65,13 @@
     )"
 
     function mux-exec-list-registers() {
+        local -a reply
         mux-impl-list-registers
+
+        private regname
+        for regname in "$reply[@]"; do
+            echo "$regname"
+        done
     }
 
     function __mux-validate-regname() {
