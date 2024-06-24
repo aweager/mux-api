@@ -1,5 +1,9 @@
 # Unified Mux API
 
+```
+WARNING: If you're using this, don't
+```
+
 TODO: rework to simpler API
 
 Nesting terminal multiplexers gets pretty complicated, especiallly when you
@@ -59,7 +63,7 @@ Multiplexers usually have some mechanism for displaying information about a
 session, tab, and pane:
 - `tmux` has the status bar, which displays windows and other arbitrary info
 - `vim` has the tabline and statusline
-- `nvim` has the winbar
+- `nvim` has the winbar (and the things vim has)
 
 Most automatically-derived information is attached to a buffer, and based on
 things like the current directory, actively running program, file name, etc.
@@ -106,29 +110,9 @@ Retrieving data:
 Modifying data:
 - _set_: sets values to arguments passed into the command. For map-like set
   commands, deletes unspecified keys
-- _update_: merges map-like values specified in the arguments into the stored
+- _merge_: merges map-like values specified in the arguments into the stored
   data
 - _delete_: unsets one or more values
-
-#### Scopes
-
-Scopes are specified using `--scope`, and must take a value of:
-- session
-- tab
-- pane
-- buffer
-
-Alternatively, these short options may be used to specify scope:
-- `-s`: session
-- `-t`: tab
-- `-p`: pane
-- `-b`: buffer
-
-#### Locations
-
-Locations are specified using `-l` or `--location`. By default, the currently
-active location for the specified scope is used. If both scope and location
-are specified, they must match.
 
 ### Variables
 
