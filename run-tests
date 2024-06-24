@@ -35,12 +35,12 @@ function main() {
         return 1
     fi
 
-    source test-mux.plugin.zsh
+    PMSPEC="" source mock-mux/mock-mux.plugin.zsh
     local SUT
     if [[ "$arg_invocation_type[-1]" == -b ]]; then
-        SUT="$PWD/bin/test-mux"
+        SUT="$PWD/mock-mux/bin/mock-mux"
     else
-        SUT="test-mux"
+        SUT="mock-mux"
     fi
 
     local -A TestFiles

@@ -1,4 +1,4 @@
-source "${0:a:h}/../test-utils.zsh"
+source "${0:a:h}/../../test-utils.zsh"
 
 function maybe-print() {
     local name
