@@ -13,13 +13,13 @@ function tab-scoped() {
 
     function assert() {
         setopt err_return
-        assert-empty STDOUT
-        assert-empty STDERR
+        assert-empty STDOUT STDERR
 
-        assert-equal cmd_name delete-var
-        assert-equal scope tab
-        assert-equal location t:tab_id
-        assert-equal locationid tab_id
-        assert-equal varname name
+        assert-equal \
+            cmd_name   delete-var \
+            scope      tab \
+            location   t:tab_id \
+            locationid tab_id \
+            varname    name
     }
 }

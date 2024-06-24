@@ -90,6 +90,11 @@ function run-test() {
         fd1="$(mktemp)"
         fd2="$(mktemp)"
         reported_params_file="$(mktemp)"
+
+        echo "
+            typeset -a reported_params
+        " > "$reported_params_file"
+
         (
             arrange
             UNDER_TEST=1 REPORTED_PARAMS_FILE="$reported_params_file" \

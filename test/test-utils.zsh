@@ -51,6 +51,7 @@ function report-parameter() {
     echo "
         ${typeset_command}
         ${assignment}
+        reported_params+=(${1})
     " >> "$REPORTED_PARAMS_FILE"
 }
 
@@ -90,34 +91,37 @@ function stderr() {
 
 # Assertions
 function assert-empty() {
-    RESULT=0
-    if ! [[ -v ${1} ]]; then
-        error "Expected empty param $1 but was unset"
-        RESULT=1
-    elif [[ -n ${(P)1} ]]; then
-        error "Expected empty param $1 but had value: ${(P)1}"
-        RESULT=2
-    fi
-    return $RESULT
+    private p
+    for p in "$@"; do
+        if ! [[ -v ${p} ]]; then
+            error "Expected empty param $p but was unset"
+            return 1
+        elif [[ -n ${(P)p} ]]; then
+            error "Expected empty param $p but had value: ${(P)p}"
+            return 2
+        fi
+    done
 }
 
 function assert-unset() {
-    RESULT=0
-    if [[ -v ${1} ]]; then
-        error "Expected param $1 to be unset"
-        RESULT=1
-    fi
-    return $RESULT
+    private p
+    for p in "$@"; do
+        if [[ -v ${p} ]]; then
+            error "Expected param $p to be unset"
+            return 1
+        fi
+    done
 }
 
 function assert-equal() {
-    RESULT=0
-    if ! [[ -v ${1} ]]; then
-        error "Expected param $1 to have value '$2' but was unset"
-        RESULT=1
-    elif [[ "${(P)1}" != "$2" ]]; then
-        error "Expected param $1 to have value '$2' but had value: ${(P)1}"
-        RESULT=2
-    fi
-    return $RESULT
+    private p v
+    for p v in "$@"; do
+        if ! [[ -v ${p} ]]; then
+            error "Expected param $p to have value '$v' but was unset"
+            return 1
+        elif [[ "${(P)p}" != "$v" ]]; then
+            error "Expected param $p to have value '$v' but had value: ${(P)p}"
+            return 2
+        fi
+    done
 }
