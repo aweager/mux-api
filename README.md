@@ -106,6 +106,32 @@ command which, when evaluated, allows manipulation of that mux session. The
 
 Some options are reused in multiple commands and defined here for brevity.
 
+#### Command Verbs
+
+Some command names begin with a verb that has a consistent meaning across all
+commands.
+
+Retrieving data:
+- _show_: displays one or more values in a way appropriate for interactive use
+- _get_: gets a value without trailing newline (like `echo -n`)
+- _has_: succeeds if the key exists, fails otherwise
+- _list_: prints a list of keys separated by newlines
+
+Modifying data:
+- _set_: sets values to arguments passed into the command. For map-like set
+  commands, deletes unspecified keys
+- _update_: merges map-like values specified in the arguments into the stored
+  data
+- _delete_: unsets one or more values
+
+Piping data to and from files (usually fifos):
+- _save_: saves multiple values, specified as a map from key -> file to write
+  to. Analogous to "get"
+- _replace_: replaces all values with the contents of the files specified in
+  the arguments. Analogous to "set"
+- _load_: loads multiple values into the store, specified as a map from key ->
+  file to read from. Analogous to "update"
+
 #### Scopes
 
 Scopes are specified using `--scope`, and must take a value of:
@@ -155,74 +181,50 @@ Prints the value of the specified variable, excluding the trailing newline like
 
 ### Registers
 
-In the below commands, `<regname>` must be `unnamed` or a single character
+In the below commands, `${regname}` must be `unnamed` or a single character
 `[a-z]`
 
-#### set-register
+#### Retrieving Register Values
 
-`set-register <regname> <value>`
+```zsh
+show-register ${regname}
+get-register ${regname}
+has-register ${regname}
+list-registers
+```
 
-#### load-register
+#### Modifying Register Values
 
-`load-register <regname>`
+```zsh
+set-register ${regname} ${value}
+delete-registers ${regname} ...
+```
 
-Sets the value of `<regname>` from stdin. Useful for piping in scripts and
-communicating with other processes.
+#### Piping Registers to/from Files
 
-#### delete-register
-
-`delete-register <regname>`
-
-#### show-register
-
-`show-register <regname>`
-
-Similar to `show-var`, mimics `echo` with trailing newline.
-
-#### get-register
-
-`get-register <regname>`
-
-Gets the value of a register, similar to `get-var`, without trailing newline,
-like `echo -n`
-
-#### list-registers
-
-`list-registers` (no arguments)
-
-Lists the names of all currently stored registers, each on a new line.
-
-#### dump-registers
-
-`dump-registers <regname> <fifo> ...`
-
-Writes the values of all specified registers into FIFOs to be read by another
-process.
-
-The positional arguments define a map from `regname` -> `fifo`, repeated for as
-many registers as desired.
+```zsh
+save-registers ${regname} ${file}
+replace-registers ${regname} ${file} ...
+load-registers ${regname} ${file} ...
+```
 
 ### Info
 
 When info is changed, the mux should redraw its status indicators.
 
-#### set-info
+#### set-info and update-info
 
-```
-set-info [scope/location] <scope> \
+```zsh
+{set,update}-info [scope/location] <scope> \
     [--icon <icon>] \
     [--icon-color <iconcolor>] \
     [--title <title>] \
     [--title-style <titlestyle>]
 ```
 
-Sets the specified information at the given scope. Anything not specified
-present is unset.
+`set-info` clears out the existing info and sets only the specified values.
 
-#### update-info
-
-Updates (merges) the specified information at the given scope. Anything not set
-is left unchanged.
+`update-info` merges the specified values into the existing info.
 
 #### resolve-info
 
@@ -243,6 +245,7 @@ new line.
 #### resolve-<infoentry>
 
 `resolve-icon [scope/location] <scope>`
+
 
 ### Mux Tree
 
@@ -290,23 +293,31 @@ child-mux unlink-parent <muxcmd>
 parent-mux unlink-child [location]
 ```
 
-The location must be a buffer.
-
 ##### link-child
 
 `link-child [location] <muxcmd>`
+
+Links this mux to a new child at the given location, setting the buffer-level
+info to match the child's session-level info.
 
 ##### link-parent
 
 `link-parent <muxcmd>`
 
+Links this mux under a new parent, performing an initial downward data sync.
+
 ##### unlink-child
 
 `unlink-child [location]`
 
+Removes the link to the child at the specified location, clearing the buffer-
+level info.
+
 ##### unlink-parent
 
 `unlink-parent` (no arguments)
+
+Removes the link to the parent.
 
 #### Syncing Data
 
