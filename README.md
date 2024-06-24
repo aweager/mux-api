@@ -127,8 +127,8 @@ Modifying data:
 Piping data to and from files (usually fifos):
 - _save_: saves multiple values, specified as a map from key -> file to write
   to. Analogous to "get"
-- _replace_: replaces all values with the contents of the files specified in
-  the arguments. Analogous to "set"
+- _replace_: replaces the value store with the contents of the files specified
+  in the arguments. Analogous to "set"
 - _load_: loads multiple values into the store, specified as a map from key ->
   file to read from. Analogous to "update"
 
@@ -203,7 +203,7 @@ delete-registers ${regname} ...
 #### Piping Registers to/from Files
 
 ```zsh
-save-registers ${regname} ${file}
+save-registers ${regname} ${file} ...
 replace-registers ${regname} ${file} ...
 load-registers ${regname} ${file} ...
 ```
