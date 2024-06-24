@@ -107,10 +107,10 @@ while true; do
 
         log.trace "Client responded with '$client_response'"
 
-        if [[ "$client_response" == "interrupted" ]]; then
+        if [[ "$client_response" == "2" ]]; then
             log.info "Interrupting current job"
             coproc.interrupt
-        elif [[ "$client_response" == "backgrounded" ]]; then
+        elif [[ "$client_response" == "-1" ]]; then
             log.info "Client backgrounded, waiting for coproc"
             coproc.wait
         fi

@@ -91,17 +91,17 @@ function call() {
         local -a stdio_args=("$stdin" "$stdout" "$stderr" "$receive" "$$")
         trap '
             trap - INT
-            echo interrupted >&$send_fd
+            echo "2" >&$send_fd
         ' INT
         echo -E "${(@q+)stdio_args}" >&$send_fd
         echo -E "${(@q+)*}" >&$send_fd
 
         if [[ -n $backgrounded ]]; then
-            echo "backgrounded" >&$send_fd
+            echo "-1" >&$send_fd
             return 0
         else
             local result="$(cat -u "$receive")"
-            echo "received" >&$send_fd
+            echo "0" >&$send_fd
             return $result
         fi
     } "$@"
