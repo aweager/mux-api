@@ -4,10 +4,12 @@ zmodload zsh/param/private
 
 ### Build a mux API compliant zsh function
 #
-# See the test mux API implementation for example usage.
+# See the mock-mux API implementation for a full example.
 #
-# arg1: the name to give the function
-# arg2: the file to source that implements required hooks
+# Usage: source /path/to/build-mux.zsh <func-name> <file>
+#
+# <func-name>: the name to give the function
+# <file>: the file to source that implements required hooks
 
 # @formatter:off
 () {
@@ -40,8 +42,8 @@ zmodload zsh/param/private
             return 1
         fi
 
-        "$pin_dep" aweager/private-func 48e1e690db96f0578186bcbe81d55b28efecb89c
-        source "deps/aweager/private-func/fbin/build-invoker" --invoker "__${func_to_build}-impl" \
+        "$pin_dep" aweager/private-func eac9711e8c9173c4cf75638743bde116fbd624b4
+        source "deps/aweager/private-func/functions/build-invoker" --invoker "__${func_to_build}-impl" \
             "utils.zsh" \
             "validators.zsh" \
             "vars.zsh" \
