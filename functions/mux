@@ -1,45 +1,29 @@
 #!/bin/zsh
 
-typeset -T MUX_STACK mux_stack ";"
-export MUX_STACK
+zmodload zsh/zutil
 
 function mux() {
-    if [[ -z "$MUX_STACK" ]]; then
-        echo '$MUX_STACK is empty' >&2
-        return 1
-    fi
-
-    local -a arg_level
-    local -a arg_instance
-
-    zmodload zsh/zutil
+    local -a arg_instance arg_background
     zparseopts -D -- \
-        {L,-level}:=arg_level \
+        {b,-background}=arg_background \
         {I,-instance}:=arg_instance ||
     return
 
-    local mux_cmd
-    if [[ -n $arg_level  && -n $arg_instance ]]; then
-        echo "At most one of level or instance may be specified" >&2
-        return 1
-    elif [[ -n $arg_instance ]]; then
-        mux_cmd="$arg_instance[-1]"
+    local instance
+    if [[ -n $arg_instance ]]; then
+        instance="$arg_instance[-1]"
+    elif [[ -n "$MUX_SOCKET" ]]; then
+        instance="$MUX_SOCKET"
     else
-        local mux_level="${arg_level[-1]-0}"
-        if ! [[ $mux_level =~ ^-?[0-9]+$ ]]; then
-            echo "Level must be an integer" >&2
-            return 1
-        fi
-
-        if [[ $mux_level -ge 0 ]]; then
-            ((mux_level += 1))
-        fi
-
-        mux_cmd="$mux_stack[$mux_level]"
+        echo '$MUX_SOCKET is not set' >&2
+        return 1
     fi
 
-    eval "$mux_cmd" "\"${(j[" "])@}\""
-    return $?
+    if [[ -z $arg_background ]]; then
+        command-server-call "$instance" "$@"
+    else
+        command-server-call-and-forget "$instance" "$@"
+    fi
 }
 
 mux "$@"
