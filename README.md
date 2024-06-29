@@ -4,170 +4,186 @@
 WARNING: If you're using this, don't
 ```
 
-TODO: rework to simpler API
+TODO: rework README to simpler API
 
 Nesting terminal multiplexers gets pretty complicated, especiallly when you
-have different multiplexing applications (e.g., `wezterm` and `tmux` and `nvim`) at the
+have different multiplexing applications (e.g., wezterm and tmux and neovim) at the
 same time. This API allows for a unified scripting setup to manipulate
-a tree of muxes.
+a graph of muxes.
 
-## Concepts and Terminology
+## Concepts and terminology
 
-### Scopes and Locations
+### Scopes and locations
 
-There are four _scopes_, from largest to smallest. Terminology gets confusing
-between different multiplexers, so this api attempts to unify those and give
-analogy to `tmux` and `vim`.
-- _session:_ the largest managed scope. Think `tmux` session or an open
-  instance of `vim`
-- _tab:_ fills almost the whole screen, with a tabbar of some kind usually
-  visible. Think `tmux` windows or `vim` tabpages
-- _pane:_ a rectangular chunk of the screen through which you can view a
-  buffer. Think `tmux` panes or `vim` windows
-- _buffer:_ the thing you look at inside of a pane. `tmux` does not support
-  this concept, so it basically collapses into pane, but `vim` distinguishes
-  between buffers (the chunk of text you interact with) and windows, which are
-  viewports into a buffer
+Multiplexers support running multiple programs (or editing multiple files) in
+their own hierarchical graph structure. In tmux, that structure looks something
+like this:
+- A _server_ contains one or more _sessions_
+- A _session_ contains one or more _windows_
+- A _window_ contains one or more _panes_
 
-Session -> tab -> pane are organized in a strict tree structure, so a pane will
-always have exactly one, constant parent tab, and a tab will have one, constant
-parent session. Pane -> buffer, however, does not have to obey this structure. A
-buffer may be visible in multiple panes at the same time, or not visible in any
-pane at all. This follows `vim` conventions for buffers and windows.
+The terms "server," "session," "window," and "pane" are examples of _scopes_. A
+specific server, session, window, or scope would be a _location_.
 
-A _location_ is a specific session, tab, pane, or buffer that you want to act
-upon with a command. At each scope, one exactly location is the _active_
-location (i.e., the one that receives keystrokes). So there is always exactly
-one active tab, one active pane, and one active buffer. All commands, unless
-otherwise specified, act upon the currently active location for the specified
-scope.
+Neovim similarly has a hierarchical graph structure:
+- A _session_ contains one or more _tabpages_
+    - n.b.: there isn't an actual term for "the global space" that holds the
+      tabpages, but session makes sense
+- A _tabpage_ contains one or more _windows_
+- A _window_ displays a _buffer_
 
-Location IDs are:
-- _fully scoped:_ given a location ID, you know exactly what its scope is
-  - there is only one valid session location, `s:`
-  - tab location IDs start with `t:`
-  - pane location IDs start with `p:`
-  - buffer location IDs start with `b:`
-- _constant:_ no matter how you rearrange the tabs/panes/buffers, the ID stays
-  the same
+Note that this hierarchy is not necessarily a tree:
+- A tmux window can belong to multiple sessions
+- A neovim buffer can belong to multiple windows
 
-### Variables
+### Local variables
 
-At each scope, you can attach variables to help with arbitrary scripting.
+At each location, you can attach variables to help with arbitrary scripting.
 
-In general, favor buffers over panes when setting variables.
-
-### Local Information
+### Local information
 
 Multiplexers usually have some mechanism for displaying information about a
 session, tab, and pane:
-- `tmux` has the status bar, which displays windows and other arbitrary info
-- `vim` has the tabline and statusline
-- `nvim` has the winbar (and the things vim has)
+- tmux has the status bar, which displays windows and other arbitrary info
+- nvim has the tab line, status line, and winbar (and the things vim has)
 
-Most automatically-derived information is attached to a buffer, and based on
-things like the current directory, actively running program, file name, etc.
-Some statically-named information can be specified by the user, e.g. session
-name, tab name, icons, styling, and the list goes on.
+Most automatically-derived information is attached to the lowest scope, and
+based on things like the current directory, actively running program, file name,
+etc. Some statically-named information can be specified by the user, e.g.
+session name, tab name, icons, styling, and the list goes on.
 
-This API assumes the implementation of the defaults gets surfaced upward from
-the currently active buffer, as that's what I usually want to happen, but it
-also supports overriding that at subsequently higher scopes.
+Info values may not contain newlines.
 
-### Syncing Data
+### Resolution of values
 
-Children are responsible for setting the buffer-level info of their parent to
-their resolved session-level info.
+When fetching the value of a variable or piece of information at a location,
+you can either query for the value as it was set at that location, or you can
+"resolve" the value based on that location's child locations. In tmux, for
+instance, the name of a window can be determined by the currently running
+process in that window's active pane.
+
+### Connecting mux hierarchies
+
+The main benefit of this unified API is the automatic connection of mux
+hierarchies together. For example, a neovim instance running in a tmux pane
+should report its session-level info upward to the tmux pane.
+
+This connection is limited to local info; local variables are not published
+upward.
 
 ## API
 
 `mux [[-I | --instance] <instance>] <command> [<command options and args>]`
 
-- `-I, --instance`: the mux instance to run the command on. At most one of
-  `--level` or `--instance` may be specified.
+- `-I, --instance`: the mux instance to run the command on. If not specified,
+  the value of `$MUX_SOCKET` is used
 
-### Mux tree
+### Mux hierarchy
 
-Each child has a pointer to its parent -- the parent, however, is unaware of
-its children. Data flows up the tree, but not down it.
-
-### Common Options
-
-Some options are reused in multiple commands and defined here for brevity.
-
-#### Command Verbs
-
-Some command names begin with a verb that has a consistent meaning across all
-commands.
-
-Retrieving data:
-- _get_: prints a raw value onto stdout
-- _resolve_: for local values, inherits non-existent keys upward from lower
-  scopes, and reports the resolved value
-- _has_: succeeds if the key exists, fails otherwise
-- _list_: prints a list of keys separated by newlines
-
-Modifying data:
-- _set_: sets values to arguments passed into the command. For map-like set
-  commands, deletes unspecified keys
-- _merge_: merges map-like values specified in the arguments into the stored
-  data
-- _delete_: unsets one or more values
+Each child has pointers to its parents -- the parents, however, are unaware of
+their children. Info flows up the tree, but not down it.
 
 ### Variables
 
 In the below commands, `<varname>` must consist only of alphanumeric characters,
 and is case sensitive.
 
-#### set-var
-
-`set-var [scope/location] <varname>`
-
-#### delete-var
-
-`delete-var [scope/location] <varname>`
-
 #### get-var
 
-`get-var [scope/location] <varname>`
+`get-var <location> <varname>`
+
+Writes the value of `varname` at `location` onto stadard output. Fails if
+the value does not exist at that location, or if the location does not exist.
 
 #### resolve-var
 
-`resolve-var [scope/location] <varname>`
+`resolve-var <location> <varname>`
+
+Resolves the value of `varname` at `location`, and writes it onto standard
+output. Fails of the location does not exist.
+
+#### set-var
+
+`set-var <location> <varname>`
+
+Sets the value of `varname` at `location` to the contents of standard input.
+Fails if the location does not exist.
+
+#### delete-var
+
+`delete-var <location> <varname>`
+
+Deletes `varname` at `location`. Fails if the location does not exist.
+
+#### has-var
+
+`has-var <location> <varname>`
+
+Succeeds if `location` has a value associated with `varname`, otherwise fails.
+Does not write anything to standard output or error.
+
+#### list-vars
+
+`list-vars <location>`
+
+Lists variable names at `location`, one on each line. Fails if `location` does
+not exist.
 
 ### Info
 
 When info is changed, the mux should redraw its status indicators.
 
-#### set-info and update-info
+#### get-info
 
-```zsh
-{set,update}-info [scope/location] \
-    [icon <icon>] \
-    [icon_color <iconcolor>] \
-    [title <title>] \
-    [title_style <titlestyle>]
+`get-info <location> [<keys>...]`
+
+Gets the info at `location` with the specified `keys`. Usually, `keys` is
+something like `icon icon_color title title_style`.
+
+Writes the values of the keys in the format:
+
+```
+key1 value1
+key2 value2
 ```
 
-`set-info` clears out the existing info and sets only the specified values.
-
-`update-info` merges the specified values into the existing info.
+If a key does not have a value, the key will be output with no following space.
+If the key has a value but that value is the empty string, the key will be
+followed by a space.
 
 #### resolve-info
 
-`resolve-info [scope/location] <scope>`
+`resolve-info <location> [<keys>]...`
 
-Resolves info at the given scope, inheriting upward from the active child scope
-if the value is unset. Info is printed in the form `infoentry value`, each on a
-new line.
+Similar to `get-info`, except the values are resolved.
 
-### Mux Tree
+#### set-info
 
-Mux sessions exist in a tree structure -- the buffer of one mux might be
-running a mux session of a child. Children keep a pointer to their parent mux.
+`set-info <location> [<key> <value>]...`
 
-#### get-parent
+Deletes all existing info at `location`, and sets each `key` to `value`.
 
-`list-parents` (no arguments)
+#### merge-info
 
-Gets the socket that can be used to interact with the parent mux session.
+`merge-info <location> [<key> <value>]...`
+
+Sets the info at `location` for each `key` to its `value`, but otherwise leaves
+existing info records alone.
+
+#### delete-info
+
+`delete-info <location> [<key>...]`
+
+Deletes the info keys at `location`.
+
+#### has-info
+
+`has-info <location> <key>`
+
+Succeeds if `location` has info at `key`, fails otherwise.
+
+#### list-info
+
+`list-info <location>`
+
+Lists the info keys set at `location`. Fails if location does not exist.
