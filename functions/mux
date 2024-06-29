@@ -3,6 +3,8 @@
 zmodload zsh/zutil
 
 function mux() {
+    setopt local_options err_return
+
     local -a arg_instance arg_background
     zparseopts -D -- \
         {b,-background}=arg_background \
