@@ -78,7 +78,7 @@ function mux-resolve-info() {
 }
 
 function mux-set-info() {
-    setopt local_options err_return
+    setopt local_options no_err_return
 
     local location="$1"
     shift
@@ -135,5 +135,5 @@ function mux-has-info() {
 }
 
 function mux-list-info() {
-    .list INFO "$1"
+    .list INFO "$1" | sort
 }

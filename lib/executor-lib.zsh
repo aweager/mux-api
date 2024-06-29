@@ -38,24 +38,16 @@ source "${0:a:h}/tree.zsh"
 function mux-impl() {
     local cmd="$1"
 
-    if [[ "$cmd" == "publish" ]]; then
-        mux-publish <&0 >&1 2>&2 &
-    else
-        local object="${1#*-}"
-        case "$object" in
-            var|vars)
-                mux-impl-var "$@"
-                ;;
-            info)
-                mux-impl-info "$@"
-                ;;
-            parent|parents)
-                mux-impl-tree "$@"
-                ;;
-            *)
-                printf 'Unknown mux command %s\n' "$cmd" >&2
-                return 1
-                ;;
-        esac <&0 >&1 2>&2 &
-    fi
+    local object="${1#*-}"
+    case "$object" in
+        var|vars)
+            mux-impl-var "$@"
+            ;;
+        info)
+            mux-impl-info "$@"
+            ;;
+        *)
+            mux-impl-tree "$@"
+            ;;
+    esac <&0 >&1 2>&2 &
 }

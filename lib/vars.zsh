@@ -4,7 +4,7 @@ function mux-impl-var() {
     local cmd="$1"
     shift
 
-    case "$verb" in
+    case "$cmd" in
         get-var)
             mux-get-var "$@"
             ;;
@@ -24,7 +24,7 @@ function mux-impl-var() {
             mux-list-vars "$@"
             ;;
         *)
-            printf 'Unknown mux command %s\n' "$verb" >&2
+            printf 'Unknown mux command %s\n' "$cmd" >&2
             return 1
             ;;
     esac

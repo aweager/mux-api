@@ -10,8 +10,11 @@ function mux-impl-tree() {
         list-parents)
             mux-list-parents "$@"
             ;;
+        publish)
+            mux-publish "$@"
+            ;;
         *)
-            printf 'Unknown mux command %s\n' >&2
+            printf 'Unknown mux command %s\n' "$cmd" >&2
             return 1
     esac
 }
@@ -46,19 +49,18 @@ function .publish-session-info() {
     resolve_result="${resolve_result%${null}}"
     local -a records=("${(0)resolve_result}")
 
-    printf 'Pulblishing %s\n' "$records[@]" >> ~/tmux-mux.log
-
     local -A InfoToSet
     local key record
     for key record in "${all_info_keys[@]:^records}"; do
         if [[ $#key -ne $#record ]]; then
             InfoToSet[$key]="${record#* }"
+        else
+            InfoToSet[$key]=""
         fi
     done
 
     local socket buffer
     for socket buffer in "$mux_parents[@]"; do
-        printf '%s\n' mux -b -I "$socket" set-info "$buffer" "${(@kv)InfoToSet}" >> ~/tmux-mux.log
         mux -I "$socket" set-info "$buffer" "${(@kv)InfoToSet}"
     done
 }
