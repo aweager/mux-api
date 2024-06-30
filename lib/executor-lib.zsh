@@ -3,10 +3,6 @@
 #   the value. If the name does not have a value, exclude the space.
 #
 #   Implement the following functions, then source this file:
-#     - $MUX_SESSION_ID
-#           location argument corresponding to the session level for this mux
-#     - $all_info_keys
-#           array of all supported info keys (usually icon icon_color title title_style)
 #     - .get()
 #           1: namespace (INFO or USER)
 #           2: location
@@ -24,8 +20,6 @@
 #           1: namespace (INFO or USER)
 #           2: location
 #           out: variable names separated by newlines
-#     - .list-parents()
-#           out: for each parent: <parent socket>\n<location in parent>\n
 #
 # Then mux-impl is ready for use with posix-executor-loop.sh
 

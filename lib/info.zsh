@@ -98,7 +98,6 @@ function mux-set-info() {
     done
 
     printf '%s\0' "${(pj:\0:)records}" | .set INFO "$location"
-    .publish-session-info
 }
 
 function mux-merge-info() {
@@ -118,7 +117,6 @@ function mux-merge-info() {
     done
 
     printf '%s\0' "${(pj:\0:)records}" | .set INFO "$location"
-    .publish-session-info
 }
 
 function mux-delete-info() {
@@ -126,7 +124,6 @@ function mux-delete-info() {
     shift
 
     printf '%s\0' "${(pj:\0:)argv}" | .set INFO "$location"
-    .publish-session-info
 }
 
 function mux-has-info() {

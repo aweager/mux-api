@@ -7,9 +7,6 @@ function mux-impl-tree() {
     shift
 
     case "$cmd" in
-        list-parents)
-            mux-list-parents "$@"
-            ;;
         publish)
             mux-publish "$@"
             ;;
@@ -19,39 +16,23 @@ function mux-impl-tree() {
     esac
 }
 
-function mux-list-parents() {
-    .list-parents
-}
-
 function mux-publish() {
-    .publish-session-info
-}
-
-function .populate-parents() {
-    setopt local_options no_err_return
-    local get_parent_result="$(.list-parents)"
-
-    if [[ -z "$get_parent_result" ]]; then
-        mux_parents=()
-        return 1
-    fi
-
-    mux_parents=("${(f)get_parent_result}")
-}
-
-function .publish-session-info() {
     setopt local_options no_err_return
 
-    .populate-parents
+    local session_id="$1"
+    local parent_socket="$2"
+    local parent_location="$3"
+    shift 3
+    local -a info_keys=("$@")
 
     local null=$'\0'
-    local resolve_result="$(.resolve INFO "$MUX_SESSION_ID" "$all_info_keys[@]" 2> /dev/null)"
+    local resolve_result="$(.resolve INFO "$session_id" "$info_keys[@]" 2> /dev/null)"
     resolve_result="${resolve_result%${null}}"
     local -a records=("${(0)resolve_result}")
 
     local -A InfoToSet
     local key record
-    for key record in "${all_info_keys[@]:^records}"; do
+    for key record in "${info_keys[@]:^records}"; do
         if [[ $#key -ne $#record ]]; then
             InfoToSet[$key]="${record#* }"
         else
@@ -59,8 +40,5 @@ function .publish-session-info() {
         fi
     done
 
-    local socket buffer
-    for socket buffer in "$mux_parents[@]"; do
-        mux -I "$socket" set-info "$buffer" "${(@kv)InfoToSet}"
-    done
+    mux -b -I "$parent_socket" set-info "$parent_location" "${(@kv)InfoToSet}"
 }
