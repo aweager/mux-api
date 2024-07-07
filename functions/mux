@@ -7,7 +7,7 @@ function mux() {
 
     local -a arg_instance arg_background
     zparseopts -D -- \
-        {b,-background}=arg_background \
+        {b,-background}+=arg_background \
         {I,-instance}:=arg_instance ||
     return
 
@@ -23,8 +23,10 @@ function mux() {
 
     if [[ -z $arg_background ]]; then
         command-server-call "$instance" "$@"
-    else
+    elif [[ $#arg_background -eq 1 ]]; then
         command-server-call-and-forget "$instance" "$@"
+    else
+        command-server-call-and-forget "$instance" "$@" < /dev/null &> /dev/null
     fi
 }
 
