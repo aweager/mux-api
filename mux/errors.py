@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import Callable, Mapping, TypeVar, Any
 from functools import partial
+from typing import Any, Callable, Mapping, TypeVar
 
 from dataclasses_json import DataClassJsonMixin
 from dataclasses_json.mm import SchemaType

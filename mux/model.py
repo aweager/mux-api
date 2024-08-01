@@ -1,6 +1,7 @@
 from abc import abstractmethod
 from typing import assert_never
-from result import Result, Ok, Err
+
+from result import Err, Ok, Result
 
 from mux.api import LocationInfoResult
 

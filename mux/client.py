@@ -2,16 +2,13 @@ from asyncio import StreamReader, StreamWriter
 from dataclasses import dataclass
 from typing import TypeVar, override
 
-from jrpc.client import (
-    JsonRpcClient,
-    wrap_streams as jrpc_client_wrap_streams,
-)
+from jrpc.client import JsonRpcClient, wrap_streams as jrpc_client_wrap_streams
 from jrpc.data import JsonRpcError, ParsedJson
 from result import Err, Ok, Result
 
+from errors import MuxApiError, ResponseSchemaMismatch
 from mux.api import (
     ClearAndReplaceParams,
-    ClearAndReplaceResult,
     GetAllParams,
     GetAllResult,
     GetMultipleParams,
@@ -24,11 +21,9 @@ from mux.api import (
     ResolveMultipleParams,
     ResolveMultipleResult,
     SetMultipleParams,
-    SetMultipleResult,
 )
 
 from .model import Location, Mux, VariableNamespace
-from errors import ResponseSchemaMismatch, MuxApiError
 
 
 _TPayload = TypeVar("_TPayload", bound=JsonTryLoadMixin)

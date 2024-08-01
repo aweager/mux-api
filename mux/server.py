@@ -1,18 +1,13 @@
-import pathlib
 import asyncio
 from functools import partial
+import pathlib
 from typing import assert_never
 
 from dataclasses_json import DataClassJsonMixin
 from jrpc.connection import wrap_streams
-from jrpc.data import (
-    JsonRpcError,
-    JsonRpcParams,
-    ParsedJson,
-)
+from jrpc.data import JsonRpcError, JsonRpcParams, ParsedJson
 from jrpc.errors import invalid_params, method_not_found
-
-from result import Result, Ok, Err
+from result import Err, Ok, Result
 
 from mux.api import (
     ClearAndReplaceParams,
@@ -31,7 +26,6 @@ from mux.api import (
     SetMultipleResult,
 )
 from mux.errors import MuxApiError
-
 
 from .model import Mux
 
