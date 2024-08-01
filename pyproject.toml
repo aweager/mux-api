@@ -1,0 +1,29 @@
+[project]
+name = "mux_api_aweager"
+version = "0.0.1"
+authors = [
+  { name="Alex Eager" },
+]
+description = "A unified terminal multiplexer API"
+readme = "README.md"
+requires-python = ">=3.11"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "result",
+    "jrpc @ file:///Users/alexandereager/projects/jrpc",
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project.urls]
+Homepage = "https://github.com/aweager/mux-api"
+Issues = "https://github.com/aweager/mux-api/issues"
+
+[tools.mypy]
+mypy_path = "$MYPY_CONFIG_FILE_DIR"

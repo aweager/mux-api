@@ -40,5 +40,5 @@ function mux-publish() {
         fi
     done
 
-    mux -b -I "$parent_socket" set-info "$parent_location" "${(@kv)InfoToSet}"
+    mux -bb -I "$parent_socket" set-info "$parent_location" "${(@kv)InfoToSet}"
 }
