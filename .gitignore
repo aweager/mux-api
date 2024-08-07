@@ -1,2 +1,2 @@
-test-out/
-deps/
+build/
+*.egg-info/

@@ -65,13 +65,15 @@ class VariableNamespace:
                 assert_never(result)
 
     @abstractmethod
-    async def set_multiple(self, values: dict[str, str]) -> Result[None, MuxApiError]:
+    async def set_multiple(
+        self, values: dict[str, str | None]
+    ) -> Result[None, MuxApiError]:
         """
         Sets multiple values.
         """
         pass
 
-    async def set(self, key: str, value: str) -> Result[None, MuxApiError]:
+    async def set(self, key: str, value: str | None) -> Result[None, MuxApiError]:
         """
         Sets a single value
         """
@@ -105,7 +107,6 @@ class Location:
         """
         return (await self.get_info()).map(lambda x: x.exists)
 
-    @abstractmethod
     async def get_id(self) -> Result[str | None, MuxApiError]:
         """
         Gets a constant, unique ID which can be used to refer to this location.
@@ -126,7 +127,7 @@ class Mux:
     """
 
     @abstractmethod
-    def location(self, reference: str) -> Location:
+    def location(self, reference: str) -> Result[Location, MuxApiError]:
         """
         Returns a Location object for querying data at the given reference.
         """

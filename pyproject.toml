@@ -1,5 +1,5 @@
 [project]
-name = "mux_api_aweager"
+name = "mux"
 version = "0.0.1"
 authors = [
   { name="Alex Eager" },
@@ -14,12 +14,15 @@ classifiers = [
 ]
 dependencies = [
     "result",
-    "jrpc @ file:///Users/alexandereager/projects/jrpc",
+    #"jrpc @ file:///Users/alexandereager/.local/share/dumb-clone/repos/jrpc",
 ]
 
 [build-system]
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["mux"]
 
 [project.urls]
 Homepage = "https://github.com/aweager/mux-api"

@@ -85,7 +85,7 @@ class ResolveAllResult(JsonTryLoadMixin):
 class SetMultipleParams(JsonTryLoadMixin):
     location: str
     namespace: str
-    values: dict[str, str]
+    values: dict[str, str | None]
 
 
 @dataclass

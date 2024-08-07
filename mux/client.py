@@ -6,8 +6,8 @@ from jrpc.client import JsonRpcClient, wrap_streams as jrpc_client_wrap_streams
 from jrpc.data import JsonRpcError, ParsedJson
 from result import Err, Ok, Result
 
-from errors import MuxApiError, ResponseSchemaMismatch
-from mux.api import (
+from .errors import MuxApiError, ResponseSchemaMismatch
+from .api import (
     ClearAndReplaceParams,
     GetAllParams,
     GetAllResult,
@@ -103,7 +103,9 @@ class _ClientNamespace(VariableNamespace):
         return _load_payload(ResolveAllResult, rpc_result).map(lambda x: x.values)
 
     @override
-    async def set_multiple(self, values: dict[str, str]) -> Result[None, MuxApiError]:
+    async def set_multiple(
+        self, values: dict[str, str | None]
+    ) -> Result[None, MuxApiError]:
         rpc_result = await self._client.request(
             "set-multiple",
             SetMultipleParams(
@@ -160,8 +162,8 @@ class _ClientMux(Mux):
     _client: JsonRpcClient
 
     @override
-    def location(self, reference: str) -> Location:
-        return _ClientLocation(reference, self._client)
+    def location(self, reference: str) -> Result[Location, MuxApiError]:
+        return Ok(_ClientLocation(reference, self._client))
 
 
 def wrap_streams(reader: StreamReader, writer: StreamWriter) -> Mux:

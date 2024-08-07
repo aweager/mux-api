@@ -1,7 +1,7 @@
 import asyncio
 from functools import partial
 import pathlib
-from typing import assert_never
+from typing import Awaitable, Callable, TypeVar, assert_never
 
 from dataclasses_json import DataClassJsonMixin
 from jrpc.connection import wrap_streams
@@ -27,17 +27,30 @@ from mux.api import (
 )
 from mux.errors import MuxApiError
 
-from .model import Mux
+from .model import Location, Mux
 
 _methods: dict[str, type[JsonTryLoadMixin]] = {
-    "get-multiple": (GetMultipleParams),
-    "get-all": (GetAllParams),
-    "resolve-multiple": (ResolveMultipleParams),
-    "resolve-all": (ResolveAllParams),
-    "set-multiple": (SetMultipleParams),
-    "clear-and-replace": (ClearAndReplaceParams),
-    "location-info": (LocationInfoParams),
+    "get-multiple": GetMultipleParams,
+    "get-all": GetAllParams,
+    "resolve-multiple": ResolveMultipleParams,
+    "resolve-all": ResolveAllParams,
+    "set-multiple": SetMultipleParams,
+    "clear-and-replace": ClearAndReplaceParams,
+    "location-info": LocationInfoParams,
 }
+
+_T = TypeVar("_T")
+
+
+async def _use_location(
+    location_result: Result[Location, MuxApiError],
+    coro_func: Callable[[Location], Awaitable[Result[_T, MuxApiError]]],
+) -> Result[_T, MuxApiError]:
+    match location_result:
+        case Ok(location):
+            return await coro_func(location)
+        case Err() as err:
+            return err
 
 
 async def _process_params(
@@ -46,42 +59,54 @@ async def _process_params(
     match params:
         case GetMultipleParams():
             return (
-                await model.location(params.location)
-                .namespace(params.namespace)
-                .get_multiple(params.keys)
+                await _use_location(
+                    model.location(params.location),
+                    lambda l: l.namespace(params.namespace).get_multiple(params.keys),
+                )
             ).map(lambda x: GetMultipleResult(x))
         case GetAllParams():
             return (
-                await model.location(params.location)
-                .namespace(params.namespace)
-                .get_all()
+                await _use_location(
+                    model.location(params.location),
+                    lambda l: l.namespace(params.namespace).get_all(),
+                )
             ).map(lambda x: GetAllResult(x))
         case ResolveMultipleParams():
             return (
-                await model.location(params.location)
-                .namespace(params.namespace)
-                .resolve_multiple(params.keys)
+                await _use_location(
+                    model.location(params.location),
+                    lambda l: l.namespace(params.namespace).resolve_multiple(
+                        params.keys
+                    ),
+                )
             ).map(lambda x: ResolveMultipleResult(x))
         case ResolveAllParams():
             return (
-                await model.location(params.location)
-                .namespace(params.namespace)
-                .resolve_all()
+                await _use_location(
+                    model.location(params.location),
+                    lambda l: l.namespace(params.namespace).resolve_all(),
+                )
             ).map(lambda x: ResolveAllResult(x))
         case SetMultipleParams():
             return (
-                await model.location(params.location)
-                .namespace(params.namespace)
-                .set_multiple(params.values)
+                await _use_location(
+                    model.location(params.location),
+                    lambda l: l.namespace(params.namespace).set_multiple(params.values),
+                )
             ).map(lambda _: SetMultipleResult())
         case ClearAndReplaceParams():
             return (
-                await model.location(params.location)
-                .namespace(params.namespace)
-                .clear_and_replace(params.values)
+                await _use_location(
+                    model.location(params.location),
+                    lambda l: l.namespace(params.namespace).clear_and_replace(
+                        params.values
+                    ),
+                )
             ).map(lambda _: ClearAndReplaceResult())
         case LocationInfoParams():
-            return await model.location(params.ref).get_info()
+            return await _use_location(
+                model.location(params.ref), lambda l: l.get_info()
+            )
         case _:
             assert_never(params)
 
