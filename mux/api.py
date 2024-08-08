@@ -4,6 +4,7 @@ from typing import Mapping, Self, TypeVar
 from dataclasses_json import DataClassJsonMixin
 from dataclasses_json.mm import SchemaType
 from jrpc.data import ParsedJson
+from marshmallow import ValidationError
 from result import Result, Ok, Err
 
 T = TypeVar("T")
@@ -21,7 +22,7 @@ def _try_load(
 
     try:
         return Ok(schema.load(parsed_json, unknown="exclude"))
-    except ValueError as error:
+    except ValidationError as error:
         return Err(f"Failed to load {schema_class.__name__} from schema: {error}")
 
 

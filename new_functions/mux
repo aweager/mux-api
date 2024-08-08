@@ -1,8 +1,12 @@
 #!/bin/zsh
 
 zmodload zsh/zutil
+zmodload zsh/net/socket
 
-function mux() {
+typeset -gAH MuxFds
+typeset -gAH MuxRequestIds
+
+function new_mux() {
     setopt local_options err_return
 
     local -a arg_instance arg_background
@@ -21,13 +25,222 @@ function mux() {
         return 1
     fi
 
-    if [[ -z $arg_background ]]; then
-        command-server-call "$instance" "$@"
-    elif [[ $#arg_background -eq 1 ]]; then
-        command-server-call-and-forget "$instance" "$@"
+    local -a call_jrpc=(jrpc request "$instance")
+    if which jrpc &> /dev/null; then
+        jrpc connect "$instance" "$instance"
     else
-        command-server-call-and-forget "$instance" "$@" < /dev/null &> /dev/null
+        call_jrpc[1]=jrpc-oneoff
     fi
+
+    local jq_post
+    if [[ -n $arg_background ]]; then
+        call_jrpc[2]=notify
+        jq_post=":"
+    else
+        call_jrpc[2]=request
+        jq_post=jq
+    fi
+
+    local cmd="$1"
+    shift
+    case "$cmd" in
+        get-var)
+            local location="$1"
+            local varname="$2"
+
+            jq -nc --arg location "$location" --arg varname "$varname" '{
+                "location": $location,
+                "namespace": "USER",
+                "keys": [ $varname ]
+            }' | \
+                "$call_jrpc[@]" get-multiple | \
+                "$jq_post" -ercj --arg v "$varname" '.values[$v]'
+            ;;
+
+        resolve-var)
+            local location="$1"
+            local varname="$2"
+
+            jq -nc --arg location "$location" --arg varname "$varname" '{
+                "location": $location,
+                "namespace": "USER",
+                "keys": [ $varname ]
+            }' | \
+                "$call_jrpc[@]" resolve-multiple | \
+                "$jq_post" -rcj --arg v "$varname" '.values[$v]'
+            ;;
+
+        set-var)
+            local location="$1"
+            local varname="$2"
+
+            jq -Rsc --arg location "$location" --arg varname "$varname" '{
+                "location": $location,
+                "namespace": "USER",
+                "values": {
+                    $varname: .
+                }
+            }' | "$call_jrpc[@]" set-multiple > /dev/null
+            ;;
+
+        delete-var)
+            local location="$1"
+            local varname="$2"
+
+            jq -nc --arg location "$location" --arg varname "$varname" '{
+                "location": $location,
+                "namespace": "USER",
+                "values": {
+                    $varname: null
+                }
+            }' | "$call_jrpc[@]" set-multiple > /dev/null
+            ;;
+
+        has-var)
+            local location="$1"
+            local varname="$2"
+
+            jq -nc --arg location "$location" --arg varname "$varname" '{
+                "location": $location,
+                "namespace": "USER",
+                "keys": [ $varname ]
+            }' | \
+                "$call_jrpc[@]" get-multiple | \
+                "$jq_post" -ercj --arg v "$varname" '.values[$v]' > /dev/null
+            ;;
+
+        list-vars)
+            # TODO need to add to API
+            printf 'list-vars not implemented\n' '' >&2
+            return 1
+            ;;
+
+        get-info)
+            local location="$1"
+            shift
+            local -a keys=("$@")
+
+            jq -nc --arg location "$location" --arg keys "${(F)keys}" '{
+                "location": $location,
+                "namespace": "INFO",
+                "keys": $keys | split("\n")
+            }' | \
+                "$call_jrpc[@]" get-multiple | \
+                "$jq_post" -rcj --arg v "$varname" '.values'
+            ;;
+
+        resolve-info)
+            local location="$1"
+            shift
+            local -a keys=("$@")
+
+            jq -nc --arg location "$location" --arg keys "${(F)keys}" '{
+                "location": $location,
+                "namespace": "INFO",
+                "keys": $keys | split("\n")
+            }' | \
+                "$call_jrpc[@]" resolve-multiple | \
+                "$jq_post" -rcj --arg v "$varname" '.values'
+            ;;
+
+        set-info)
+            local location="$1"
+            shift
+
+            local -a values_entries jq_args
+            local key value i
+            i=0
+            for key value; do
+                values_entries+=("\$key$i: \$value$i")
+                jq_args+=(
+                    --arg "key$i" "$key"
+                    --arg "value$i" "$value"
+                )
+                i="$(($i + 1))"
+            done
+
+            jq -nc --arg location "$location" "$jq_args[@]" "{
+                \"location\": \$location,
+                \"namespace\": \"INFO\",
+                \"values\": {
+                    "${(j:,:)values_entries}"
+                }
+            }" | "$call_jrpc[@]" clear-and-replace > /dev/null
+            ;;
+
+        merge-info)
+            local location="$1"
+            shift
+
+            local -a values_entries jq_args
+            local key value i
+            i=0
+            for key value; do
+                values_entries+=("\$key$i: \$value$i")
+                jq_args+=(
+                    --arg "key$i" "$key"
+                    --arg "value$i" "$value"
+                )
+                i="$(($i + 1))"
+            done
+
+            jq -nc --arg location "$location" "$jq_args[@]" "{
+                \"location\": \$location,
+                \"namespace\": \"INFO\",
+                \"values\": {
+                    "${(j:,:)values_entries}"
+                }
+            }" | "$call_jrpc[@]" set-multiple > /dev/null
+            ;;
+
+        delete-info)
+            local location="$1"
+            shift
+
+            local -a values_entries jq_args
+            local key value i
+            i=0
+            for key value; do
+                values_entries+=("\$key$i: null")
+                jq_args+=(
+                    --arg "key$i" "$key"
+                )
+                i="$(($i + 1))"
+            done
+
+            jq -nc --arg location "$location" "$jq_args[@]" "{
+                \"location\": \$location,
+                \"namespace\": \"INFO\",
+                \"values\": {
+                    "${(j:,:)values_entries}"
+                }
+            }" | "$call_jrpc[@]" set-multiple > /dev/null
+            ;;
+
+        has-info)
+            local location="$1"
+            local varname="$2"
+
+            jq -nc --arg location "$location" --arg varname "$varname" '{
+                "location": $location,
+                "namespace": "INFO",
+                "keys": [ $varname ]
+            }' | \
+                "$call_jrpc[@]" get-multiple | \
+                "$jq_post" -ercj --arg v "$varname" '.values[$v]' > /dev/null
+            ;;
+
+        list-info)
+            # TODO need to add to API
+            printf 'list-vars not implemented\n' '' >&2
+            return 1
+            ;;
+
+        *)
+            printf 'Unsupported mux command %s\n' "$cmd" >&2
+            return 1
+            ;;
+    esac
 }
 
-mux "$@"
+# mux "$@"

@@ -5,6 +5,7 @@ WARNING: If you're using this, don't
 ```
 
 TODO: rework README to simpler API
+TODO: rework to JSON output for some commands
 
 Nesting terminal multiplexers gets pretty complicated, especiallly when you
 have different multiplexing applications (e.g., wezterm and tmux and neovim) at the
