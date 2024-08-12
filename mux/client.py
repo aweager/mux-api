@@ -8,18 +8,25 @@ from result import Err, Ok, Result
 
 from .errors import MuxApiError, ResponseSchemaMismatch
 from .api import (
+    ClearAndReplace,
     ClearAndReplaceParams,
+    GetAll,
     GetAllParams,
     GetAllResult,
+    GetMultiple,
     GetMultipleParams,
     GetMultipleResult,
     JsonTryLoadMixin,
+    LocationInfo,
     LocationInfoParams,
     LocationInfoResult,
+    ResolveAll,
     ResolveAllParams,
     ResolveAllResult,
+    ResolveMultiple,
     ResolveMultipleParams,
     ResolveMultipleResult,
+    SetMultiple,
     SetMultipleParams,
 )
 
@@ -59,84 +66,82 @@ class _ClientNamespace(VariableNamespace):
         self, keys: list[str]
     ) -> Result[dict[str, str | None], MuxApiError]:
         rpc_result = await self._client.request(
-            "get-multiple",
-            GetMultipleParams(
-                location=self._location_reference, namespace=self._name, keys=keys
-            ),
+            GetMultiple(
+                GetMultipleParams(
+                    location=self._location_reference, namespace=self._name, keys=keys
+                )
+            )
         )
-        return _load_payload(GetMultipleResult, rpc_result).map(lambda x: x.values)
+        return rpc_result.map(lambda x: x.values)
 
     @override
     async def get_all(self) -> Result[dict[str, str], MuxApiError]:
         rpc_result = await self._client.request(
-            "get-all",
-            GetAllParams(
-                location=self._location_reference,
-                namespace=self._name,
-            ),
+            GetAll(
+                GetAllParams(
+                    location=self._location_reference,
+                    namespace=self._name,
+                )
+            )
         )
-        return _load_payload(GetAllResult, rpc_result).map(lambda x: x.values)
+        return rpc_result.map(lambda x: x.values)
 
     @override
     async def resolve_multiple(
         self, keys: list[str]
     ) -> Result[dict[str, str | None], MuxApiError]:
         rpc_result = await self._client.request(
-            "resolve-multiple",
-            ResolveMultipleParams(
-                location=self._location_reference,
-                namespace=self._name,
-                keys=keys,
-            ),
+            ResolveMultiple(
+                ResolveMultipleParams(
+                    location=self._location_reference,
+                    namespace=self._name,
+                    keys=keys,
+                )
+            )
         )
-        return _load_payload(ResolveMultipleResult, rpc_result).map(lambda x: x.values)
+        return rpc_result.map(lambda x: x.values)
 
     @override
     async def resolve_all(self) -> Result[dict[str, str], MuxApiError]:
         rpc_result = await self._client.request(
-            "resolve-all",
-            ResolveAllParams(
-                location=self._location_reference,
-                namespace=self._name,
-            ),
+            ResolveAll(
+                ResolveAllParams(
+                    location=self._location_reference,
+                    namespace=self._name,
+                )
+            )
         )
-        return _load_payload(ResolveAllResult, rpc_result).map(lambda x: x.values)
+        return rpc_result.map(lambda x: x.values)
 
     @override
     async def set_multiple(
         self, values: dict[str, str | None]
     ) -> Result[None, MuxApiError]:
         rpc_result = await self._client.request(
-            "set-multiple",
-            SetMultipleParams(
-                location=self._location_reference,
-                namespace=self._name,
-                values=values,
-            ),
+            SetMultiple(
+                SetMultipleParams(
+                    location=self._location_reference,
+                    namespace=self._name,
+                    values=values,
+                )
+            )
         )
-        match rpc_result:
-            case Ok():
-                return Ok(None)
-            case Err(error):
-                return Err(MuxApiError.from_json_rpc_error(error))
+        return rpc_result.map(lambda _: None)
 
     @override
     async def clear_and_replace(
         self, values: dict[str, str]
     ) -> Result[None, MuxApiError]:
         rpc_result = await self._client.request(
-            "clear-and-replace",
-            ClearAndReplaceParams(
-                location=self._location_reference,
-                namespace=self._name,
-                values=values,
-            ),
+            ClearAndReplace(
+                ClearAndReplaceParams(
+                    location=self._location_reference,
+                    namespace=self._name,
+                    values=values,
+                )
+            )
         )
-        match rpc_result:
-            case Ok():
-                return Ok(None)
-            case Err(error):
-                return Err(MuxApiError.from_json_rpc_error(error))
+        return rpc_result.map(lambda _: None)
 
 
 @dataclass
@@ -146,11 +151,11 @@ class _ClientLocation(Location):
 
     @override
     async def get_info(self) -> Result[LocationInfoResult, MuxApiError]:
-        rpc_result = await self._client.request(
-            "location-info",
-            LocationInfoParams(ref=self._reference),
+        return await self._client.request(
+            LocationInfo(
+                LocationInfoParams(ref=self._reference),
+            )
         )
-        return _load_payload(LocationInfoResult, rpc_result)
 
     @override
     def namespace(self, name: str) -> VariableNamespace:

@@ -120,13 +120,22 @@ function new_mux() {
             shift
             local -a keys=("$@")
 
-            jq -nc --arg location "$location" --arg keys "${(F)keys}" '{
-                "location": $location,
-                "namespace": "INFO",
-                "keys": $keys | split("\n")
-            }' | \
-                "$call_jrpc[@]" get-multiple | \
-                "$jq_post" -rcj --arg v "$varname" '.values'
+            if [[ -n $keys ]]; then
+                jq -nc --arg location "$location" --arg keys "${(F)keys}" '{
+                    "location": $location,
+                    "namespace": "INFO",
+                    "keys": $keys | split("\n")
+                }' | \
+                    "$call_jrpc[@]" get-multiple | \
+                    "$jq_post" -rcj '.values'
+            else
+                jq -nc --arg location "$location" '{
+                    "location": $location,
+                    "namespace": "INFO"
+                }' | \
+                    "$call_jrpc[@]" get-all | \
+                    "$jq_post" -rcj '.values'
+            fi
             ;;
 
         resolve-info)
@@ -134,13 +143,22 @@ function new_mux() {
             shift
             local -a keys=("$@")
 
-            jq -nc --arg location "$location" --arg keys "${(F)keys}" '{
-                "location": $location,
-                "namespace": "INFO",
-                "keys": $keys | split("\n")
-            }' | \
-                "$call_jrpc[@]" resolve-multiple | \
-                "$jq_post" -rcj --arg v "$varname" '.values'
+            if [[ -n $keys ]]; then
+                jq -nc --arg location "$location" --arg keys "${(F)keys}" '{
+                    "location": $location,
+                    "namespace": "INFO",
+                    "keys": $keys | split("\n")
+                }' | \
+                    "$call_jrpc[@]" resolve-multiple | \
+                    "$jq_post" -rcj '.values'
+            else
+                jq -nc --arg location "$location" '{
+                    "location": $location,
+                    "namespace": "INFO"
+                }' | \
+                    "$call_jrpc[@]" resolve-all | \
+                    "$jq_post" -rcj '.values'
+            fi
             ;;
 
         set-info)
