@@ -2,7 +2,6 @@ from dataclasses import dataclass
 from typing import Awaitable, Callable, TypeVar, assert_never
 
 from dataclasses_json import DataClassJsonMixin
-from jrpc.connection import JsonRpcProcessor
 from jrpc.data import JsonRpcError, JsonRpcParams, ParsedJson
 from jrpc.errors import invalid_params, method_not_found
 from result import Err, Ok, Result
@@ -16,6 +15,7 @@ from .api import (
     GetMultipleResult,
     JsonTryLoadMixin,
     LocationInfoParams,
+    MuxMethodName,
     ResolveAllParams,
     ResolveAllResult,
     ResolveMultipleParams,
@@ -29,13 +29,13 @@ from .model import Location, Mux
 _T = TypeVar("_T")
 
 _methods: dict[str, type[JsonTryLoadMixin]] = {
-    "get-multiple": GetMultipleParams,
-    "get-all": GetAllParams,
-    "resolve-multiple": ResolveMultipleParams,
-    "resolve-all": ResolveAllParams,
-    "set-multiple": SetMultipleParams,
-    "clear-and-replace": ClearAndReplaceParams,
-    "location-info": LocationInfoParams,
+    MuxMethodName.GET_MULTIPLE: GetMultipleParams,
+    MuxMethodName.GET_ALL: GetAllParams,
+    MuxMethodName.RESOLVE_MULTIPLE: ResolveMultipleParams,
+    MuxMethodName.RESOLVE_ALL: ResolveAllParams,
+    MuxMethodName.SET_MULTIPLE: SetMultipleParams,
+    MuxMethodName.CLEAR_AND_REPLACE: ClearAndReplaceParams,
+    MuxMethodName.LOCATION_INFO: LocationInfoParams,
 }
 
 

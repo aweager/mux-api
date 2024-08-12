@@ -52,23 +52,23 @@ class JsonTryLoadMixin(DataClassJsonMixin):
         return _try_load(cls, cls.schema(), parsed_json)
 
 
-TParams = TypeVar("TParams", bound=DataClassJsonMixin)
-TResult = TypeVar("TResult", bound=DataClassJsonMixin)
+_TParams = TypeVar("_TParams", bound=DataClassJsonMixin)
+_TResult = TypeVar("_TResult", bound=DataClassJsonMixin)
 
 
-class _MuxRequestHandler(
-    Generic[TParams, TResult], jrpc_client.RequestHandler[TResult, MuxApiError]
+class _MuxRequestDefinition(
+    Generic[_TParams, _TResult], jrpc_client.RequestDefinition[_TResult, MuxApiError]
 ):
-    _result_type: type[TResult]
+    _result_type: type[_TResult]
 
     def __init__(
-        self, method: MuxMethodName, params: TParams, result_type: type[TResult]
+        self, method: MuxMethodName, params: _TParams, result_type: type[_TResult]
     ) -> None:
         super().__init__(method.value, params.to_dict())
         self._result_type = result_type
 
     @override
-    def load_result(self, result: ParsedJson) -> Result[TResult, MuxApiError]:
+    def load_result(self, result: ParsedJson) -> Result[_TResult, MuxApiError]:
         match _try_load(self._result_type, self._result_type.schema(), result):
             case Ok() as ok:
                 return ok
@@ -96,7 +96,7 @@ class GetMultipleResult(JsonTryLoadMixin):
     values: dict[str, str | None]
 
 
-class GetMultiple(_MuxRequestHandler[GetMultipleParams, GetMultipleResult]):
+class GetMultiple(_MuxRequestDefinition[GetMultipleParams, GetMultipleResult]):
     def __init__(self, params: GetMultipleParams) -> None:
         super().__init__(MuxMethodName.GET_MULTIPLE, params, GetMultipleResult)
 
@@ -112,7 +112,7 @@ class GetAllResult(JsonTryLoadMixin):
     values: dict[str, str]
 
 
-class GetAll(_MuxRequestHandler[GetAllParams, GetAllResult]):
+class GetAll(_MuxRequestDefinition[GetAllParams, GetAllResult]):
     def __init__(self, params: GetAllParams) -> None:
         super().__init__(
             MuxMethodName.GET_ALL,
@@ -133,7 +133,9 @@ class ResolveMultipleResult(JsonTryLoadMixin):
     values: dict[str, str | None]
 
 
-class ResolveMultiple(_MuxRequestHandler[ResolveMultipleParams, ResolveMultipleResult]):
+class ResolveMultiple(
+    _MuxRequestDefinition[ResolveMultipleParams, ResolveMultipleResult]
+):
     def __init__(self, params: ResolveMultipleParams) -> None:
         super().__init__(MuxMethodName.RESOLVE_MULTIPLE, params, ResolveMultipleResult)
 
@@ -149,7 +151,7 @@ class ResolveAllResult(JsonTryLoadMixin):
     values: dict[str, str]
 
 
-class ResolveAll(_MuxRequestHandler[ResolveAllParams, ResolveAllResult]):
+class ResolveAll(_MuxRequestDefinition[ResolveAllParams, ResolveAllResult]):
     def __init__(self, params: ResolveAllParams) -> None:
         super().__init__(MuxMethodName.RESOLVE_ALL, params, ResolveAllResult)
 
@@ -166,7 +168,7 @@ class SetMultipleResult(JsonTryLoadMixin):
     pass
 
 
-class SetMultiple(_MuxRequestHandler[SetMultipleParams, SetMultipleResult]):
+class SetMultiple(_MuxRequestDefinition[SetMultipleParams, SetMultipleResult]):
     def __init__(self, params: SetMultipleParams) -> None:
         super().__init__(MuxMethodName.SET_MULTIPLE, params, SetMultipleResult)
 
@@ -183,7 +185,9 @@ class ClearAndReplaceResult(JsonTryLoadMixin):
     pass
 
 
-class ClearAndReplace(_MuxRequestHandler[ClearAndReplaceParams, ClearAndReplaceResult]):
+class ClearAndReplace(
+    _MuxRequestDefinition[ClearAndReplaceParams, ClearAndReplaceResult]
+):
     def __init__(self, params: ClearAndReplaceParams) -> None:
         super().__init__(MuxMethodName.CLEAR_AND_REPLACE, params, ClearAndReplaceResult)
 
@@ -199,6 +203,6 @@ class LocationInfoResult(JsonTryLoadMixin):
     id: str | None
 
 
-class LocationInfo(_MuxRequestHandler[LocationInfoParams, LocationInfoResult]):
+class LocationInfo(_MuxRequestDefinition[LocationInfoParams, LocationInfoResult]):
     def __init__(self, params: LocationInfoParams) -> None:
         super().__init__(MuxMethodName.LOCATION_INFO, params, LocationInfoResult)
