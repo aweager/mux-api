@@ -1,14 +1,11 @@
 from dataclasses import dataclass
-from typing import Mapping, Self, TypeVar, override, Generic
+from typing import TypeVar, override, Generic
 from enum import StrEnum
 
-from dataclasses_json import DataClassJsonMixin
-from dataclasses_json.mm import SchemaType
 from jrpc.data import ParsedJson
-from marshmallow import ValidationError
 from result import Result, Ok, Err
 from jrpc import client as jrpc_client
-from jrpc.data import JsonRpcError
+from jrpc.data import JsonRpcError, JsonTryLoadMixin
 
 from .errors import MuxApiError, ResponseSchemaMismatch
 
@@ -23,37 +20,8 @@ class MuxMethodName(StrEnum):
     LOCATION_INFO = "mux.location-info"
 
 
-T = TypeVar("T")
-
-
-def _try_load(
-    schema_class: type[T], schema: SchemaType[T], parsed_json: ParsedJson
-) -> Result[T, str]:
-    if not isinstance(parsed_json, Mapping):
-        return Err(
-            f"Failed to load {schema_class.__name__} from schema: 'parsed_json' must be a dict"
-        )
-    if not isinstance(parsed_json, dict):
-        parsed_json = dict(parsed_json)
-
-    try:
-        return Ok(schema.load(parsed_json, unknown="exclude"))
-    except ValidationError as error:
-        return Err(f"Failed to load {schema_class.__name__} from schema: {error}")
-
-
-class JsonTryLoadMixin(DataClassJsonMixin):
-    """
-    Mixin built on dataclasses-json that adds a try_load method
-    """
-
-    @classmethod
-    def try_load(cls, parsed_json: ParsedJson) -> Result[Self, str]:
-        return _try_load(cls, cls.schema(), parsed_json)
-
-
-_TParams = TypeVar("_TParams", bound=DataClassJsonMixin)
-_TResult = TypeVar("_TResult", bound=DataClassJsonMixin)
+_TParams = TypeVar("_TParams", bound=JsonTryLoadMixin)
+_TResult = TypeVar("_TResult", bound=JsonTryLoadMixin)
 
 
 class _MuxRequestDefinition(
@@ -69,7 +37,7 @@ class _MuxRequestDefinition(
 
     @override
     def load_result(self, result: ParsedJson) -> Result[_TResult, MuxApiError]:
-        match _try_load(self._result_type, self._result_type.schema(), result):
+        match self._result_type.try_load(result):
             case Ok() as ok:
                 return ok
             case Err(msg):

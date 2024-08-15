@@ -171,5 +171,9 @@ class _ClientMux(Mux):
         return Ok(_ClientLocation(reference, self._client))
 
 
+def wrap_jrpc_client(client: JsonRpcClient) -> Mux:
+    return _ClientMux(client)
+
+
 def wrap_streams(reader: StreamReader, writer: StreamWriter) -> Mux:
     return _ClientMux(jrpc_client_wrap_streams(reader, writer))
