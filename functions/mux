@@ -261,4 +261,4 @@ function mux() {
     esac
 }
 
-# mux "$@"
+mux "$@"
