@@ -14,7 +14,7 @@ classifiers = [
 ]
 dependencies = [
     "result",
-    #"jrpc @ file:///Users/alexandereager/.local/share/dumb-clone/repos/jrpc",
+    #"jrpc @ TODO
 ]
 
 [build-system]
