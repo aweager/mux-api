@@ -1,0 +1,33 @@
+#!/bin/zsh
+
+zmodload zsh/zutil
+
+function mux() {
+    setopt local_options err_return
+
+    local -a arg_instance arg_background
+    zparseopts -D -- \
+        {b,-background}+=arg_background \
+        {I,-instance}:=arg_instance ||
+    return
+
+    local instance
+    if [[ -n $arg_instance ]]; then
+        instance="$arg_instance[-1]"
+    elif [[ -n "$MUX_SOCKET" ]]; then
+        instance="$MUX_SOCKET"
+    else
+        echo '$MUX_SOCKET is not set' >&2
+        return 1
+    fi
+
+    if [[ -z $arg_background ]]; then
+        command-server-call "$instance" "$@"
+    elif [[ $#arg_background -eq 1 ]]; then
+        command-server-call-and-forget "$instance" "$@"
+    else
+        command-server-call-and-forget "$instance" "$@" < /dev/null &> /dev/null
+    fi
+}
+
+mux "$@"
