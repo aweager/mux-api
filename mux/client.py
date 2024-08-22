@@ -7,11 +7,24 @@ from jrpc.client import wrap_streams as jrpc_client_wrap_streams
 from result import Ok, Result
 from typing_extensions import override
 
-from .api import (ClearAndReplace, ClearAndReplaceParams, GetAll, GetAllParams,
-                  GetMultiple, GetMultipleParams, JsonTryLoadMixin,
-                  LocationInfo, LocationInfoParams, LocationInfoResult,
-                  ResolveAll, ResolveAllParams, ResolveMultiple,
-                  ResolveMultipleParams, SetMultiple, SetMultipleParams)
+from .api import (
+    ClearAndReplace,
+    ClearAndReplaceParams,
+    GetAll,
+    GetAllParams,
+    GetMultiple,
+    GetMultipleParams,
+    JsonTryLoadMixin,
+    LocationInfo,
+    LocationInfoParams,
+    LocationInfoResult,
+    ResolveAll,
+    ResolveAllParams,
+    ResolveMultiple,
+    ResolveMultipleParams,
+    SetMultiple,
+    SetMultipleParams,
+)
 from .errors import MuxApiError
 from .model import Location, Mux, VariableNamespace
 
@@ -25,9 +38,7 @@ class _ClientNamespace(VariableNamespace):
     _client: JsonRpcClient
 
     @override
-    async def get_multiple(
-        self, keys: list[str]
-    ) -> Result[dict[str, str | None], MuxApiError]:
+    async def get_multiple(self, keys: list[str]) -> Result[dict[str, str | None], MuxApiError]:
         rpc_result = await self._client.request(
             GetMultiple(
                 GetMultipleParams(
@@ -50,9 +61,7 @@ class _ClientNamespace(VariableNamespace):
         return rpc_result.map(lambda x: x.values)
 
     @override
-    async def resolve_multiple(
-        self, keys: list[str]
-    ) -> Result[dict[str, str | None], MuxApiError]:
+    async def resolve_multiple(self, keys: list[str]) -> Result[dict[str, str | None], MuxApiError]:
         rpc_result = await self._client.request(
             ResolveMultiple(
                 ResolveMultipleParams(
@@ -77,9 +86,7 @@ class _ClientNamespace(VariableNamespace):
         return rpc_result.map(lambda x: x.values)
 
     @override
-    async def set_multiple(
-        self, values: dict[str, str | None]
-    ) -> Result[None, MuxApiError]:
+    async def set_multiple(self, values: dict[str, str | None]) -> Result[None, MuxApiError]:
         rpc_result = await self._client.request(
             SetMultiple(
                 SetMultipleParams(
@@ -92,9 +99,7 @@ class _ClientNamespace(VariableNamespace):
         return rpc_result.map(lambda _: None)
 
     @override
-    async def clear_and_replace(
-        self, values: dict[str, str]
-    ) -> Result[None, MuxApiError]:
+    async def clear_and_replace(self, values: dict[str, str]) -> Result[None, MuxApiError]:
         rpc_result = await self._client.request(
             ClearAndReplace(
                 ClearAndReplaceParams(

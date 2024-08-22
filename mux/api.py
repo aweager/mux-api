@@ -42,9 +42,7 @@ class _MuxRequestDefinition(
                 return ok
             case Err(msg):
                 return Err(
-                    MuxApiError.from_data(
-                        ResponseSchemaMismatch(self._result_type.__name__, msg)
-                    )
+                    MuxApiError.from_data(ResponseSchemaMismatch(self._result_type.__name__, msg))
                 )
 
     @override
@@ -101,9 +99,7 @@ class ResolveMultipleResult(JsonTryLoadMixin):
     values: dict[str, str | None]
 
 
-class ResolveMultiple(
-    _MuxRequestDefinition[ResolveMultipleParams, ResolveMultipleResult]
-):
+class ResolveMultiple(_MuxRequestDefinition[ResolveMultipleParams, ResolveMultipleResult]):
     def __init__(self, params: ResolveMultipleParams) -> None:
         super().__init__(MuxMethodName.RESOLVE_MULTIPLE, params, ResolveMultipleResult)
 
@@ -153,9 +149,7 @@ class ClearAndReplaceResult(JsonTryLoadMixin):
     pass
 
 
-class ClearAndReplace(
-    _MuxRequestDefinition[ClearAndReplaceParams, ClearAndReplaceResult]
-):
+class ClearAndReplace(_MuxRequestDefinition[ClearAndReplaceParams, ClearAndReplaceResult]):
     def __init__(self, params: ClearAndReplaceParams) -> None:
         super().__init__(MuxMethodName.CLEAR_AND_REPLACE, params, ClearAndReplaceResult)
 

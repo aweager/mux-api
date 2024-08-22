@@ -32,9 +32,7 @@ def _load_if_dict(schema: SchemaType[_T], parsed_json: ParsedJson) -> _T | None:
         return None
 
 
-def register_error_type(
-    code: int, message: str, data_type: type[DataClassJsonMixin]
-) -> None:
+def register_error_type(code: int, message: str, data_type: type[DataClassJsonMixin]) -> None:
     _registry_by_code[code] = partial(_load_if_dict, data_type.schema())
     _registry_by_type[data_type] = (code, message)
 

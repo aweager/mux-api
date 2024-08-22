@@ -53,9 +53,7 @@ class MuxRpcProcessor:
         match params_type.try_load(params):
             case Ok(loaded_params):
                 result = await self._process_params(loaded_params)
-                return result.map(DataClassJsonMixin.to_dict).map_err(
-                    MuxApiError.to_json_rpc_error
-                )
+                return result.map(DataClassJsonMixin.to_dict).map_err(MuxApiError.to_json_rpc_error)
             case Err(schema_error):
                 return Err(invalid_params(schema_error))
 
@@ -76,9 +74,7 @@ class MuxRpcProcessor:
                 return (
                     await self._use_location(
                         params.location,
-                        lambda l: l.namespace(params.namespace).get_multiple(
-                            params.keys
-                        ),
+                        lambda l: l.namespace(params.namespace).get_multiple(params.keys),
                     )
                 ).map(lambda x: GetMultipleResult(x))
             case GetAllParams():
@@ -92,9 +88,7 @@ class MuxRpcProcessor:
                 return (
                     await self._use_location(
                         params.location,
-                        lambda l: l.namespace(params.namespace).resolve_multiple(
-                            params.keys
-                        ),
+                        lambda l: l.namespace(params.namespace).resolve_multiple(params.keys),
                     )
                 ).map(lambda x: ResolveMultipleResult(x))
             case ResolveAllParams():
@@ -108,18 +102,14 @@ class MuxRpcProcessor:
                 return (
                     await self._use_location(
                         params.location,
-                        lambda l: l.namespace(params.namespace).set_multiple(
-                            params.values
-                        ),
+                        lambda l: l.namespace(params.namespace).set_multiple(params.values),
                     )
                 ).map(lambda _: SetMultipleResult())
             case ClearAndReplaceParams():
                 return (
                     await self._use_location(
                         params.location,
-                        lambda l: l.namespace(params.namespace).clear_and_replace(
-                            params.values
-                        ),
+                        lambda l: l.namespace(params.namespace).clear_and_replace(params.values),
                     )
                 ).map(lambda _: ClearAndReplaceResult())
             case LocationInfoParams():

@@ -10,9 +10,7 @@ from .errors import MuxApiError
 
 class VariableNamespace:
     @abstractmethod
-    async def get_multiple(
-        self, keys: list[str]
-    ) -> Result[dict[str, str | None], MuxApiError]:
+    async def get_multiple(self, keys: list[str]) -> Result[dict[str, str | None], MuxApiError]:
         """
         Returns the values for the given keys.
         """
@@ -39,9 +37,7 @@ class VariableNamespace:
                 assert_never(result)
 
     @abstractmethod
-    async def resolve_multiple(
-        self, keys: list[str]
-    ) -> Result[dict[str, str | None], MuxApiError]:
+    async def resolve_multiple(self, keys: list[str]) -> Result[dict[str, str | None], MuxApiError]:
         """
         Resolves the values for the given keys.
         """
@@ -65,9 +61,7 @@ class VariableNamespace:
                 assert_never(result)
 
     @abstractmethod
-    async def set_multiple(
-        self, values: dict[str, str | None]
-    ) -> Result[None, MuxApiError]:
+    async def set_multiple(self, values: dict[str, str | None]) -> Result[None, MuxApiError]:
         """
         Sets multiple values.
         """
@@ -80,9 +74,7 @@ class VariableNamespace:
         return await self.set_multiple({key: value})
 
     @abstractmethod
-    async def clear_and_replace(
-        self, values: dict[str, str]
-    ) -> Result[None, MuxApiError]:
+    async def clear_and_replace(self, values: dict[str, str]) -> Result[None, MuxApiError]:
         """
         Clears this namespace of all existing values and sets new ones.
         """
