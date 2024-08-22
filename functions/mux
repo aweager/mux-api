@@ -3,9 +3,6 @@
 zmodload zsh/zutil
 zmodload zsh/net/socket
 
-typeset -gAH MuxFds
-typeset -gAH MuxRequestIds
-
 function mux() {
     setopt local_options err_return
 
