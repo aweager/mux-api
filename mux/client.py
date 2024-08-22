@@ -2,57 +2,20 @@ from asyncio import StreamReader, StreamWriter
 from dataclasses import dataclass
 from typing import TypeVar, override
 
-from jrpc.client import JsonRpcClient, wrap_streams as jrpc_client_wrap_streams
+from jrpc.client import JsonRpcClient
+from jrpc.client import wrap_streams as jrpc_client_wrap_streams
 from jrpc.data import JsonRpcError, ParsedJson
 from result import Err, Ok, Result
 
+from .api import (ClearAndReplace, ClearAndReplaceParams, GetAll, GetAllParams,
+                  GetMultiple, GetMultipleParams, JsonTryLoadMixin,
+                  LocationInfo, LocationInfoParams, LocationInfoResult,
+                  ResolveAll, ResolveAllParams, ResolveMultiple,
+                  ResolveMultipleParams, SetMultiple, SetMultipleParams)
 from .errors import MuxApiError, ResponseSchemaMismatch
-from .api import (
-    ClearAndReplace,
-    ClearAndReplaceParams,
-    GetAll,
-    GetAllParams,
-    GetAllResult,
-    GetMultiple,
-    GetMultipleParams,
-    GetMultipleResult,
-    JsonTryLoadMixin,
-    LocationInfo,
-    LocationInfoParams,
-    LocationInfoResult,
-    ResolveAll,
-    ResolveAllParams,
-    ResolveAllResult,
-    ResolveMultiple,
-    ResolveMultipleParams,
-    ResolveMultipleResult,
-    SetMultiple,
-    SetMultipleParams,
-)
-
 from .model import Location, Mux, VariableNamespace
 
-
 _TPayload = TypeVar("_TPayload", bound=JsonTryLoadMixin)
-
-
-def _load_payload(
-    schema_class: type[_TPayload],
-    rpc_result: Result[ParsedJson, JsonRpcError],
-) -> Result[_TPayload, MuxApiError]:
-    match rpc_result:
-        case Ok(payload):
-            match schema_class.try_load(payload):
-                case Ok(loaded):
-                    return Ok(loaded)
-                case Err(schema_error):
-                    return Err(
-                        MuxApiError.from_data(
-                            ResponseSchemaMismatch(schema_class.__name__, schema_error)
-                        )
-                    )
-        case Err(rpc_error):
-            return Err(MuxApiError.from_json_rpc_error(rpc_error))
 
 
 @dataclass
