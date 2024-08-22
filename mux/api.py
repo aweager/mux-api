@@ -1,11 +1,11 @@
 from dataclasses import dataclass
-from typing import TypeVar, override, Generic
 from enum import StrEnum
+from typing import Generic, TypeVar
 
-from jrpc.data import ParsedJson
-from result import Result, Ok, Err
 from jrpc import client as jrpc_client
-from jrpc.data import JsonRpcError, JsonTryLoadMixin
+from jrpc.data import JsonRpcError, JsonTryLoadMixin, ParsedJson
+from result import Err, Ok, Result
+from typing_extensions import override
 
 from .errors import MuxApiError, ResponseSchemaMismatch
 

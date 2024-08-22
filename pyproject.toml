@@ -30,3 +30,10 @@ Issues = "https://github.com/aweager/mux-api/issues"
 
 [tools.mypy]
 mypy_path = "$MYPY_CONFIG_FILE_DIR"
+
+[tool.black]
+line-length = 100
+preview = true
+
+[tool.isort]
+profile = "black"
