@@ -1,53 +1,9 @@
 from dataclasses import dataclass
-from enum import StrEnum
-from typing import Generic, TypeVar
 
-from jrpc import client as jrpc_client
-from jrpc.data import JsonRpcError, JsonTryLoadMixin, ParsedJson
-from result import Err, Ok, Result
-from typing_extensions import override
+from jrpc.data import JsonTryLoadMixin
+from jrpc.service import JsonTryConverter, MethodDescriptor
 
-from .errors import MuxApiError, ResponseSchemaMismatch
-
-
-class MuxMethodName(StrEnum):
-    GET_MULTIPLE = "mux.get-multiple"
-    GET_ALL = "mux.get-all"
-    RESOLVE_MULTIPLE = "mux.resolve-multiple"
-    RESOLVE_ALL = "mux.resolve-all"
-    SET_MULTIPLE = "mux.set-multiple"
-    CLEAR_AND_REPLACE = "mux.clear-and-replace"
-    LOCATION_INFO = "mux.location-info"
-
-
-_TParams = TypeVar("_TParams", bound=JsonTryLoadMixin)
-_TResult = TypeVar("_TResult", bound=JsonTryLoadMixin)
-
-
-class _MuxRequestDefinition(
-    Generic[_TParams, _TResult], jrpc_client.RequestDefinition[_TResult, MuxApiError]
-):
-    _result_type: type[_TResult]
-
-    def __init__(
-        self, method: MuxMethodName, params: _TParams, result_type: type[_TResult]
-    ) -> None:
-        super().__init__(method.value, params.to_dict())
-        self._result_type = result_type
-
-    @override
-    def load_result(self, result: ParsedJson) -> Result[_TResult, MuxApiError]:
-        match self._result_type.try_load(result):
-            case Ok() as ok:
-                return ok
-            case Err(msg):
-                return Err(
-                    MuxApiError.from_data(ResponseSchemaMismatch(self._result_type.__name__, msg))
-                )
-
-    @override
-    def convert_error(self, error: JsonRpcError) -> MuxApiError:
-        return MuxApiError.from_json_rpc_error(error)
+from .errors import ERROR_CONVERTER
 
 
 @dataclass
@@ -62,11 +18,6 @@ class GetMultipleResult(JsonTryLoadMixin):
     values: dict[str, str | None]
 
 
-class GetMultiple(_MuxRequestDefinition[GetMultipleParams, GetMultipleResult]):
-    def __init__(self, params: GetMultipleParams) -> None:
-        super().__init__(MuxMethodName.GET_MULTIPLE, params, GetMultipleResult)
-
-
 @dataclass
 class GetAllParams(JsonTryLoadMixin):
     location: str
@@ -76,15 +27,6 @@ class GetAllParams(JsonTryLoadMixin):
 @dataclass
 class GetAllResult(JsonTryLoadMixin):
     values: dict[str, str]
-
-
-class GetAll(_MuxRequestDefinition[GetAllParams, GetAllResult]):
-    def __init__(self, params: GetAllParams) -> None:
-        super().__init__(
-            MuxMethodName.GET_ALL,
-            params,
-            GetAllResult,
-        )
 
 
 @dataclass
@@ -99,11 +41,6 @@ class ResolveMultipleResult(JsonTryLoadMixin):
     values: dict[str, str | None]
 
 
-class ResolveMultiple(_MuxRequestDefinition[ResolveMultipleParams, ResolveMultipleResult]):
-    def __init__(self, params: ResolveMultipleParams) -> None:
-        super().__init__(MuxMethodName.RESOLVE_MULTIPLE, params, ResolveMultipleResult)
-
-
 @dataclass
 class ResolveAllParams(JsonTryLoadMixin):
     location: str
@@ -113,11 +50,6 @@ class ResolveAllParams(JsonTryLoadMixin):
 @dataclass
 class ResolveAllResult(JsonTryLoadMixin):
     values: dict[str, str]
-
-
-class ResolveAll(_MuxRequestDefinition[ResolveAllParams, ResolveAllResult]):
-    def __init__(self, params: ResolveAllParams) -> None:
-        super().__init__(MuxMethodName.RESOLVE_ALL, params, ResolveAllResult)
 
 
 @dataclass
@@ -132,11 +64,6 @@ class SetMultipleResult(JsonTryLoadMixin):
     pass
 
 
-class SetMultiple(_MuxRequestDefinition[SetMultipleParams, SetMultipleResult]):
-    def __init__(self, params: SetMultipleParams) -> None:
-        super().__init__(MuxMethodName.SET_MULTIPLE, params, SetMultipleResult)
-
-
 @dataclass
 class ClearAndReplaceParams(JsonTryLoadMixin):
     location: str
@@ -147,11 +74,6 @@ class ClearAndReplaceParams(JsonTryLoadMixin):
 @dataclass
 class ClearAndReplaceResult(JsonTryLoadMixin):
     pass
-
-
-class ClearAndReplace(_MuxRequestDefinition[ClearAndReplaceParams, ClearAndReplaceResult]):
-    def __init__(self, params: ClearAndReplaceParams) -> None:
-        super().__init__(MuxMethodName.CLEAR_AND_REPLACE, params, ClearAndReplaceResult)
 
 
 @dataclass
@@ -165,6 +87,46 @@ class LocationInfoResult(JsonTryLoadMixin):
     id: str | None
 
 
-class LocationInfo(_MuxRequestDefinition[LocationInfoParams, LocationInfoResult]):
-    def __init__(self, params: LocationInfoParams) -> None:
-        super().__init__(MuxMethodName.LOCATION_INFO, params, LocationInfoResult)
+class MuxMethod:
+    GET_MULTIPLE = MethodDescriptor(
+        name="mux.get-multiple",
+        params_converter=JsonTryConverter(GetMultipleParams),
+        result_converter=JsonTryConverter(GetMultipleResult),
+        error_converter=ERROR_CONVERTER,
+    )
+    GET_ALL = MethodDescriptor(
+        name="mux.get-all",
+        params_converter=JsonTryConverter(GetAllParams),
+        result_converter=JsonTryConverter(GetAllResult),
+        error_converter=ERROR_CONVERTER,
+    )
+    RESOLVE_MULTIPLE = MethodDescriptor(
+        name="mux.resolve-multiple",
+        params_converter=JsonTryConverter(ResolveMultipleParams),
+        result_converter=JsonTryConverter(ResolveMultipleResult),
+        error_converter=ERROR_CONVERTER,
+    )
+    RESOLVE_ALL = MethodDescriptor(
+        name="mux.resolve-all",
+        params_converter=JsonTryConverter(ResolveAllParams),
+        result_converter=JsonTryConverter(ResolveAllResult),
+        error_converter=ERROR_CONVERTER,
+    )
+    SET_MULTIPLE = MethodDescriptor(
+        name="mux.set-multiple",
+        params_converter=JsonTryConverter(SetMultipleParams),
+        result_converter=JsonTryConverter(SetMultipleResult),
+        error_converter=ERROR_CONVERTER,
+    )
+    CLEAR_AND_REPLACE = MethodDescriptor(
+        name="mux.clear-and-replace",
+        params_converter=JsonTryConverter(ClearAndReplaceParams),
+        result_converter=JsonTryConverter(ClearAndReplaceResult),
+        error_converter=ERROR_CONVERTER,
+    )
+    LOCATION_INFO = MethodDescriptor(
+        name="mux.location-info",
+        params_converter=JsonTryConverter(LocationInfoParams),
+        result_converter=JsonTryConverter(LocationInfoResult),
+        error_converter=ERROR_CONVERTER,
+    )

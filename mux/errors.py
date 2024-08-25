@@ -1,14 +1,16 @@
 from dataclasses import dataclass
-from enum import Enum
+from enum import IntEnum
 from functools import partial
 from typing import Any, Callable, Mapping, TypeVar
 
 from dataclasses_json import DataClassJsonMixin
 from dataclasses_json.mm import SchemaType
 from jrpc.data import JsonRpcError, ParsedJson
+from jrpc.service import BidirectionalConverter
+from typing_extensions import override
 
 
-class MuxErrorCode(Enum):
+class MuxErrorCode(IntEnum):
     LOCATION_DOES_NOT_EXIST = 10003
     RESPONSE_SCHEMA_MISMATCH = 10004
 
@@ -64,13 +66,26 @@ class MuxApiError:
         return MuxApiError(code, message, data.to_dict())
 
 
+class MuxApiErrorConverter(BidirectionalConverter[JsonRpcError, MuxApiError]):
+    @override
+    def load(self, f: JsonRpcError) -> MuxApiError:
+        return MuxApiError.from_json_rpc_error(f)
+
+    @override
+    def dump(self, t: MuxApiError) -> JsonRpcError:
+        return t.to_json_rpc_error()
+
+
+ERROR_CONVERTER = MuxApiErrorConverter()
+
+
 @dataclass
 class LocationDoesNotExist(DataClassJsonMixin):
     reference: str
 
 
 register_error_type(
-    code=MuxErrorCode.LOCATION_DOES_NOT_EXIST.value,
+    code=MuxErrorCode.LOCATION_DOES_NOT_EXIST,
     message="Location does not exist",
     data_type=LocationDoesNotExist,
 )
@@ -83,7 +98,7 @@ class ResponseSchemaMismatch(DataClassJsonMixin):
 
 
 register_error_type(
-    code=MuxErrorCode.RESPONSE_SCHEMA_MISMATCH.value,
+    code=MuxErrorCode.RESPONSE_SCHEMA_MISMATCH,
     message="Response schema does not match",
     data_type=ResponseSchemaMismatch,
 )
