@@ -1,4 +1,4 @@
-from jrpc.service import JsonRpcProcessor, MethodHandler, MethodSet, TypedMethodHandler
+from jrpc.service import JsonRpcProcessor, MethodSet, TypedMethodHandler
 
 from .api import MuxMethod
 from .service import MuxApi
