@@ -15,21 +15,19 @@ function mux() {
     local instance
     if [[ -n $arg_instance ]]; then
         instance="$arg_instance[-1]"
-    elif [[ -n "$MUX_SOCKET" ]]; then
-        instance="$MUX_SOCKET"
+    elif [[ -n "$MUX_INSTANCE" ]]; then
+        instance="$MUX_INSTANCE"
     else
-        echo '$MUX_SOCKET is not set' >&2
+        echo '$MUX_INSTANCE is not set' >&2
         return 1
     fi
 
-    local jrpc_or_oneoff request_or_notify socket_or_name jq_post
-    if which jrpc &> /dev/null; then
-        jrpc connect "$instance" "mux@$instance"
+    local jrpc_or_oneoff request_or_notify jq_post
+    if which jrpc-router &> /dev/null; then
+        jrpc-router connect "$instance"
         jrpc_or_oneoff=jrpc
-        socket_or_name="mux@$instance"
     else
-        jrpc_or_oneoff=jrpc-oneoff
-        socket_or_name="$socket"
+        jrpc_or_oneoff=jrpc-router-oneoff
     fi
 
     if [[ -n $arg_background ]]; then
@@ -40,7 +38,7 @@ function mux() {
         jq_post=jq
     fi
 
-    local -a call_jrpc=("$jrpc_or_oneoff" "$request_or_notify" "$socket_or_name")
+    local -a call_jrpc=("$jrpc_or_oneoff" "$request_or_notify" "$instance")
 
     local cmd="$1"
     shift
