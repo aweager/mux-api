@@ -70,4 +70,4 @@ class MuxApi(ABC):
         pass
 
     def method_set(self) -> MethodSet:
-        return make_method_set(MuxApi, self)
+        return make_method_set(MuxApi, self, max_parallelism=1)
