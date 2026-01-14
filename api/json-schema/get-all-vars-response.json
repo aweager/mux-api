@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mux-api.local/schemas/get-all-vars-response.json",
+  "title": "GetAllVars Response",
+  "description": "Response for MuxAPI.GetAllVars method. Only includes variables that are set (no null values).",
+  "type": "object",
+  "required": ["values"],
+  "properties": {
+    "values": {
+      "type": "object",
+      "description": "A map of variable names to their values. Only includes set variables.",
+      "additionalProperties": {
+        "type": "string"
+      }
+    }
+  }
+}

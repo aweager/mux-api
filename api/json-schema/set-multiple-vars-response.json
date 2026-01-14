@@ -1,0 +1,8 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mux-api.local/schemas/set-multiple-vars-response.json",
+  "title": "SetMultipleVars Response",
+  "description": "Response for MuxAPI.SetMultipleVars method. Returns an empty result.",
+  "type": "object",
+  "properties": {}
+}

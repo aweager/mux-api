@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mux-api.local/schemas/get-multiple-vars-request.json",
+  "title": "GetMultipleVars Request",
+  "description": "Request parameters for MuxAPI.GetMultipleVars method",
+  "type": "object",
+  "required": ["location", "namespace", "keys"],
+  "properties": {
+    "location": {
+      "$ref": "common.json#/definitions/Location"
+    },
+    "namespace": {
+      "$ref": "common.json#/definitions/Namespace"
+    },
+    "keys": {
+      "type": "array",
+      "description": "Array of variable names to retrieve",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    }
+  }
+}

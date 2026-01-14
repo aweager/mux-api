@@ -1,0 +1,13 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mux-api.local/schemas/resolve-multiple-vars-response.json",
+  "title": "ResolveMultipleVars Response",
+  "description": "Response for MuxAPI.ResolveMultipleVars method. Resolves through the scope hierarchy, starting from the bottom.",
+  "type": "object",
+  "required": ["values"],
+  "properties": {
+    "values": {
+      "$ref": "common.json#/definitions/VariableValues"
+    }
+  }
+}

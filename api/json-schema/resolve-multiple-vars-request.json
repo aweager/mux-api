@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mux-api.local/schemas/resolve-multiple-vars-request.json",
+  "title": "ResolveMultipleVars Request",
+  "description": "Request parameters for MuxAPI.ResolveMultipleVars method",
+  "type": "object",
+  "required": ["location", "namespace", "keys"],
+  "properties": {
+    "location": {
+      "$ref": "common.json#/definitions/Location"
+    },
+    "namespace": {
+      "$ref": "common.json#/definitions/Namespace"
+    },
+    "keys": {
+      "type": "array",
+      "description": "Array of variable names to retrieve with scope resolution",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    }
+  }
+}

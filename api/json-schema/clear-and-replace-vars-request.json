@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mux-api.local/schemas/clear-and-replace-vars-request.json",
+  "title": "ClearAndReplaceVars Request",
+  "description": "Request parameters for MuxAPI.ClearAndReplaceVars method. Clears all variables in a namespace and replaces with new values.",
+  "type": "object",
+  "required": ["location", "namespace", "values"],
+  "properties": {
+    "location": {
+      "$ref": "common.json#/definitions/Location"
+    },
+    "namespace": {
+      "$ref": "common.json#/definitions/Namespace"
+    },
+    "values": {
+      "type": "object",
+      "description": "A map of variable names to their new values",
+      "additionalProperties": {
+        "type": "string"
+      }
+    }
+  }
+}

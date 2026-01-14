@@ -1,0 +1,29 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mux-api.local/schemas/common.json",
+  "title": "Common Types",
+  "description": "Common types used across MuxAPI",
+  "definitions": {
+    "Location": {
+      "type": "string",
+      "description": "A location reference string in the format 'scope:target'. Exact valid scope and target values depend on the implementation.",
+      "pattern": "^[^:]+:.+$",
+      "examples": ["s:$0", "p:%5", "s:mysession"]
+    },
+    "Namespace": {
+      "type": "string",
+      "description": "A namespace identifier for grouping variables",
+      "examples": ["INFO"]
+    },
+    "VariableValues": {
+      "type": "object",
+      "description": "A map of variable names to their values. Null values indicate unset variables.",
+      "additionalProperties": {
+        "oneOf": [
+          { "type": "string" },
+          { "type": "null" }
+        ]
+      }
+    }
+  }
+}
