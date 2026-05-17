@@ -1,0 +1,13 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mux-api.local/schemas/get-location-info-request.json",
+  "title": "GetLocationInfo Request",
+  "description": "Request parameters for MuxAPI.GetLocationInfo method",
+  "type": "object",
+  "required": ["ref"],
+  "properties": {
+    "ref": {
+      "$ref": "common.json#/definitions/Location"
+    }
+  }
+}

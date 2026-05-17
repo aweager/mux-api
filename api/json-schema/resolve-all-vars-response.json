@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mux-api.local/schemas/resolve-all-vars-response.json",
+  "title": "ResolveAllVars Response",
+  "description": "Response for MuxAPI.ResolveAllVars method. Gets all variables in a namespace with scope resolution.",
+  "type": "object",
+  "required": ["values"],
+  "properties": {
+    "values": {
+      "type": "object",
+      "description": "A map of variable names to their values, resolved through the scope hierarchy",
+      "additionalProperties": {
+        "type": "string"
+      }
+    }
+  }
+}

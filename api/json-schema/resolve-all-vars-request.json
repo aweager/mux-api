@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mux-api.local/schemas/resolve-all-vars-request.json",
+  "title": "ResolveAllVars Request",
+  "description": "Request parameters for MuxAPI.ResolveAllVars method",
+  "type": "object",
+  "required": ["location", "namespace"],
+  "properties": {
+    "location": {
+      "$ref": "common.json#/definitions/Location"
+    },
+    "namespace": {
+      "$ref": "common.json#/definitions/Namespace"
+    }
+  }
+}

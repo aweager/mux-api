@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mux-api.local/schemas/set-multiple-vars-request.json",
+  "title": "SetMultipleVars Request",
+  "description": "Request parameters for MuxAPI.SetMultipleVars method. Set value to null to unset a variable.",
+  "type": "object",
+  "required": ["location", "namespace", "values"],
+  "properties": {
+    "location": {
+      "$ref": "common.json#/definitions/Location"
+    },
+    "namespace": {
+      "$ref": "common.json#/definitions/Namespace"
+    },
+    "values": {
+      "$ref": "common.json#/definitions/VariableValues"
+    }
+  }
+}
