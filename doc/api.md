@@ -121,6 +121,72 @@ Result:
 }
 ```
 
+### MuxAPI.RegisterVarCallback
+
+Registers a callback to be invoked whenever the resolved values of variables in
+a namespace change in the level below the specified location. The response
+includes the current values within that namespace. The order of locations in the
+returned list may or may not matter, depending on specific implementation. The
+callback will stop being called when it is no longer routable on the jrpc-mesh.
+
+Request parameters:
+
+```json
+{
+    "parent_location": "s:$0",
+    "namespace": "INFO",
+    "callback": "client.host/client.service/CallbackMethod"
+}
+```
+
+Result:
+
+```json
+{
+    "locations": [
+        {
+            "id": "w:@0",
+            "values": {
+                "var1": "value1",
+                "var2": "value2"
+            }
+        },
+        {
+            "id": "w:@1",
+            "values": {
+                "var1": "other_value1",
+                "var2": "other_value2"
+            }
+        }
+    ]
+}
+```
+
+Callback parameters:
+
+```json
+{
+    "locations": [
+        {
+            "id": "w:@0",
+            "values": {
+                "var1": "value1",
+                "var2": "value2"
+            }
+        },
+        {
+            "id": "w:@1",
+            "values": {
+                "var1": "other_value1",
+                "var2": "other_value2"
+            }
+        }
+    ]
+}
+```
+
+The callback result is empty.
+
 ### MuxAPI.SetMultipleVars
 
 Sets or unsets multiple variables at a location.

@@ -24,6 +24,23 @@
           { "type": "null" }
         ]
       }
+    },
+    "LocationEntry": {
+      "type": "object",
+      "description": "A location with its resolved variable values. Only includes set variables.",
+      "required": ["id", "values"],
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/Location"
+        },
+        "values": {
+          "type": "object",
+          "description": "A map of variable names to their resolved values. Only includes set variables.",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
     }
   }
 }

@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mux-api.local/schemas/register-var-callback-response.json",
+  "title": "RegisterVarCallback Response",
+  "description": "Response for MuxAPI.RegisterVarCallback. Returns the current resolved variable values for each location in the namespace at the level below the specified parent location.",
+  "type": "object",
+  "required": ["locations"],
+  "properties": {
+    "locations": {
+      "type": "array",
+      "description": "List of locations one level below the parent, each with their current resolved variable values",
+      "items": {
+        "$ref": "common.json#/definitions/LocationEntry"
+      }
+    }
+  }
+}

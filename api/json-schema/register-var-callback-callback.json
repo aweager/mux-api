@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mux-api.local/schemas/register-var-callback-callback.json",
+  "title": "RegisterVarCallback Callback Parameters",
+  "description": "Parameters sent to the registered callback whenever resolved variable values in the namespace change. The callback result is empty.",
+  "type": "object",
+  "required": ["locations"],
+  "properties": {
+    "locations": {
+      "type": "array",
+      "description": "List of locations one level below the parent with their current resolved variable values after the change. Order may vary by implementation.",
+      "items": {
+        "$ref": "common.json#/definitions/LocationEntry"
+      }
+    }
+  }
+}
