@@ -111,12 +111,6 @@ function mux() {
                 "$jq_post" -ercj --arg v "$varname" '.values[$v]' > /dev/null
             ;;
 
-        list-vars)
-            # TODO need to add to API
-            printf 'list-vars not implemented\n' '' >&2
-            return 1
-            ;;
-
         get-info)
             local location="$1"
             shift
@@ -138,6 +132,29 @@ function mux() {
                     "$call_jrpc[@]" "$instance/MuxAPI.GetAllVars" | \
                     "$jq_post" -rcj '.values'
             fi
+            ;;
+
+        watch-info)
+            local location="$1"
+            shift
+
+            local temp_client="subscriber-$RANDOM"
+            {
+                jrpc connect "$JRPC_MESH_SOCKET" "$temp_client"
+
+                jq -nc --arg publisher "$instance" '{
+                    "subscriptions": [{
+                        "publisher": $publisher,
+                        "topic": "mux/resolved_vars/INFO"
+                    }]
+                }' | \
+                    jrpc notify "$temp_client" "awe.proxy/UpdateSubscriptions"
+
+                jrpc listen "$temp_client" | \
+                    jq --unbuffered --arg location "$location" '.params.payload | select(.location == $location) | .values'
+            } always {
+                jrpc disconnect "$temp_client"
+            }
             ;;
 
         resolve-info)
@@ -248,12 +265,6 @@ function mux() {
             }' | \
                 "$call_jrpc[@]" "$instance/MuxAPI.GetMultipleVars" | \
                 "$jq_post" -ercj --arg v "$varname" '.values[$v]' > /dev/null
-            ;;
-
-        list-info)
-            # TODO need to add to API
-            printf 'list-vars not implemented\n' '' >&2
-            return 1
             ;;
 
         *)
